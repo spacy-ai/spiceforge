@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from ...services.ngspice import NgspiceFailure, run_ngspice
-from ...schema import ErrorDetail, SimulationRequest, SimulationResponse
+from services.ngspice import NgspiceFailure, run_ngspice
+from core.schema import ErrorDetail, SimulationRequest, SimulationResponse
 
 router = APIRouter(tags=["simulation"])
 
