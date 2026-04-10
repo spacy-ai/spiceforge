@@ -2,6 +2,7 @@
 
 import sys
 import subprocess
+from pathlib import Path
 
 
 def run_command(command: list[str]):
@@ -13,9 +14,31 @@ def run_command(command: list[str]):
         sys.exit(1)
 
 
+def _latest_revision_file() -> Path | None:
+    versions_dir = Path(__file__).resolve().parent / "alembic" / "versions"
+    if not versions_dir.exists():
+        return None
+
+    candidates = [p for p in versions_dir.iterdir() if p.suffix == ".py"]
+    if not candidates:
+        return None
+
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
+def _is_empty_revision(file_path: Path) -> bool:
+    content = file_path.read_text(encoding="utf-8")
+    return "op." not in content and "pass" in content
+
+
 def makemigrations():
     print("Generating migrations...")
     run_command(["alembic", "revision", "--autogenerate", "-m", "auto migration"])
+    latest = _latest_revision_file()
+    if latest and _is_empty_revision(latest):
+        latest.unlink()
+        print("No schema changes detected. No migration created.")
+        return
 
 
 def migrate():
