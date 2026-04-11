@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from app.services.ngspice import NgspiceFailure, run_ngspice
-from app.core.schema import ErrorDetail, SimulationRequest, SimulationResponse
+from app.schema.simulation import ErrorDetail, SimulationRequest, SimulationResponse
 
 router = APIRouter(tags=["simulation"])
 

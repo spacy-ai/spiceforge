@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Tuple
 
-from app.core.schema import AnalysisType, AnalysisResult, ErrorDetail, SimulationOptions
+from app.schema.simulation import AnalysisType, AnalysisResult, ErrorDetail, SimulationOptions
 
 _ANALYSIS_PATTERNS = [
     (AnalysisType.op, re.compile(r"^\.op\b", re.IGNORECASE)),
