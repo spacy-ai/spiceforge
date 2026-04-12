@@ -21,6 +21,8 @@ class SimulationOptions(BaseModel):
     timeout_seconds: int = Field(20, ge=1, le=120)
     max_output_kb: int = Field(512, ge=16, le=4096)
     preserve_artifacts: bool = False
+    include_schematic: bool = False
+    save_schematic_to_project_root: bool = False
 
 
 class SimulationRequest(BaseModel):
@@ -41,10 +43,17 @@ class ErrorDetail(BaseModel):
     hint: Optional[str] = None
 
 
+class SchematicResult(BaseModel):
+    format: str
+    content: str
+    saved_path: Optional[str] = None
+
+
 class SimulationResponse(BaseModel):
     status: str
     analyses: List[AnalysisType]
     results: List[AnalysisResult] = Field(default_factory=list)
+    schematic: Optional[SchematicResult] = None
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     returncode: Optional[int] = None

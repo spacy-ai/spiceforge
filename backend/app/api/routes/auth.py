@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_db, authenticate_user, get_user
 from app.core.encryption import create_access_token, get_password_hash
 from app.schema.user import Token
-from app.schema.user import RegisterRequest, UserResponse
+from app.schema.user import RegisterRequest, UserResponse   
 from app.models.user import User
 
 router = APIRouter()
@@ -30,7 +30,7 @@ def signup(user: RegisterRequest, db: Session = Depends(get_db)):
     if db_email:
         raise HTTPException(status_code=400, detail="Email already registered")
     hashed_password = get_password_hash(user.password)
-    db_user = User(username=user.username, hashed_password=hashed_password)
+    db_user = User(username=user.username, email=user.email, password=hashed_password)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
