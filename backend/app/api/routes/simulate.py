@@ -4,9 +4,14 @@ from fastapi import APIRouter, HTTPException
 
 from app.services.ngspice import NgspiceFailure, run_ngspice
 from app.services.schematic import generate_schematic
-from app.schema.simulation import ErrorDetail, SimulationRequest, SimulationResponse
+from app.schema.simulation import (
+    ErrorDetail,
+    SimulationRequest,
+    SimulationResponse,
+)
 
 router = APIRouter(tags=["simulation"])
+
 
 
 @router.post("/simulate", response_model=SimulationResponse)
