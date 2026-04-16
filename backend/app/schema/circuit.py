@@ -13,7 +13,7 @@ class CircuitCreateRequest(BaseModel):
 
 class CircuitResponse(BaseModel):
     id: int
-    user_id: int
+    user_id: Optional[int]
     name: Optional[str]
     netlist: str
     created_at: datetime
