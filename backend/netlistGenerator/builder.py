@@ -1,27 +1,10 @@
 from __future__ import annotations
 
-import logging
 from typing import Optional
 
-logger = logging.getLogger(__name__)
-
-## REFERRED FROM ANALOGCODER
-# CircuitBuilder class that builds LTspice netlists:
-#    - Methods for all component types: resistor(), capacitor(), inductor(), voltage_source(), current_source(), diode(), mosfet(), bjt(), opamp(), etc.
-#    - Methods for analyses: ac_analysis(), dc_sweep(), transient(), operating_point()
-#    - model() for .MODEL statements
-#    - netlist() to generate final SPICE string
-
-# Adding components
-# Each method adds a SPICE line.
-# Example: resistor
-# def resistor(self, name, n1, n2, value):
-#     self._components.append(f"R{name} {n1} {n2} {value}")
-# Produces:
-# R1 n1 n2 1k
 
 class CircuitBuilder:
-    def __init__(self, title: str = "SPACY Circuit"):
+    def __init__(self, title: str = "SPICY Circuit"):
         self._title = title
         self._global_node = "0"
         self._models: list[str] = []
@@ -245,10 +228,6 @@ class CircuitBuilder:
         self._analyses.append(".op")
         return self
 
-    def dc_operating_point(self) -> "CircuitBuilder":
-        self._analyses.append(".op")
-        return self
-
     def noise(
         self,
         output: str,
@@ -290,6 +269,3 @@ class CircuitBuilder:
         lines.append(".end")
 
         return "\n".join(lines)
-
-    def __repr__(self) -> str:
-        return f"CircuitBuilder(title='{self._title}', components={len(self._components)}, analyses={len(self._analyses)})"

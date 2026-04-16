@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
-
-logger = logging.getLogger(__name__)
-
+from typing import Optional
 
 class ValidationSeverity(Enum):
     ERROR = "error"
@@ -25,7 +21,6 @@ class ValidationIssue:
 
 @dataclass
 class ValidationResult:
-
     is_valid: bool
     issues: list[ValidationIssue] = field(default_factory=list)
     validated_blueprint: Optional[dict] = None
@@ -66,7 +61,6 @@ class ValidationResult:
         )
 
     def to_dict(self) -> dict:
-        # converting into dictionary for api response
         return {
             "is_valid": self.is_valid,
             "issues": [
@@ -84,7 +78,6 @@ class ValidationResult:
 
 
 class ComponentValidator:
-
     ALLOWED_COMPONENT_TYPES = {
         "resistor",
         "capacitor",
@@ -95,10 +88,6 @@ class ComponentValidator:
         "voltage_source",
         "current_source",
         "diode",
-        "voltage_controlled_switch",
-        "transmission_line",
-        "transformer",
-        "subcircuit",
     }
 
     REQUIRED_PARAMS = {
@@ -159,7 +148,7 @@ class ComponentValidator:
                 ValidationIssue(
                     severity=ValidationSeverity.ERROR,
                     category="invalid_component_type",
-                    message=f"Unknown component type '{comp_type}'. Allowed: {', '.join(sorted(cls.ALLOWED_COMPONENT_TYPES))}",
+                    message=f"Unknown component type '{comp_type}'",
                     component_name=name,
                 )
             )
@@ -181,7 +170,7 @@ class ComponentValidator:
                     ValidationIssue(
                         severity=ValidationSeverity.WARNING,
                         category="naming_convention",
-                        message=f"Component name '{name}' should start with '{expected_prefix}' per SPICE convention",
+                        message=f"Component name '{name}' should start with '{expected_prefix}'",
                         component_name=name,
                     )
                 )
@@ -225,10 +214,7 @@ class ComponentValidator:
 
 
 class NodeValidator:
-
     NODE_PATTERN = re.compile(r"^[a-zA-Z0-9_]+$")
-
-    RESERVED_NODES = {"0", "gnd", "gnd!", "node"}
 
     @classmethod
     def validate_nodes(
@@ -259,7 +245,7 @@ class NodeValidator:
                         ValidationIssue(
                             severity=ValidationSeverity.ERROR,
                             category="invalid_node",
-                            message=f"Invalid node name '{node}' in component '{name}'. Use alphanumeric and underscore only",
+                            message=f"Invalid node name '{node}' in component '{name}'",
                             component_name=name,
                             node=node,
                         )
@@ -267,8 +253,7 @@ class NodeValidator:
                     continue
 
                 referenced_nodes.add(node)
-
-            defined_nodes.update(nodes)
+                defined_nodes.add(node)
 
         all_nodes = referenced_nodes | defined_nodes
 
@@ -286,7 +271,7 @@ class NodeValidator:
                 ValidationIssue(
                     severity=ValidationSeverity.WARNING,
                     category="missing_ground",
-                    message="No connection to ground node '0' found - circuit may have no reference",
+                    message="No connection to ground node '0' found",
                 )
             )
 
@@ -305,7 +290,6 @@ class NodeValidator:
 
 
 class AnalysisValidator:
-
     ALLOWED_ANALYSIS_TYPES = {"ac", "dc", "transient", "op", "dc_sweep"}
 
     REQUIRED_PARAMS = {
@@ -323,9 +307,9 @@ class AnalysisValidator:
         if not analyses:
             issues.append(
                 ValidationIssue(
-                    severity=ValidationSeverity.WARNING,
+                    severity=ValidationSeverity.ERROR,
                     category="missing_analysis",
-                    message="No analysis directive specified - simulation may not run",
+                    message="No analysis directive specified - at least one required",
                 )
             )
             return issues
@@ -348,7 +332,7 @@ class AnalysisValidator:
                     ValidationIssue(
                         severity=ValidationSeverity.ERROR,
                         category="invalid_analysis_type",
-                        message=f"Unknown analysis type '{analysis_type}'. Allowed: {', '.join(sorted(cls.ALLOWED_ANALYSIS_TYPES))}",
+                        message=f"Unknown analysis type '{analysis_type}'",
                     )
                 )
                 continue
@@ -378,7 +362,6 @@ class AnalysisValidator:
 
 
 class BlueprintValidator:
-
     def __init__(self):
         self.component_validator = ComponentValidator()
         self.node_validator = NodeValidator()
@@ -394,10 +377,7 @@ class BlueprintValidator:
 
         circuit_id = blueprint.get("circuit_id", "")
         if not circuit_id:
-            result.add_warning(
-                "missing_field",
-                "Blueprint missing 'circuit_id' - will be auto-generated",
-            )
+            result.add_warning("missing_field", "Blueprint missing 'circuit_id'")
 
         description = blueprint.get("description", "")
         if not description:
