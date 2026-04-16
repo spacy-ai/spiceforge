@@ -6,7 +6,17 @@ from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+
+def _get_secret_key() -> str:
+    secret_key = os.getenv("SECRET_KEY")
+    if secret_key is None or not secret_key.strip():
+        raise RuntimeError("SECRET_KEY environment variable must be set for JWT signing.")
+    if len(secret_key) < 32:
+        raise RuntimeError("SECRET_KEY environment variable must be at least 32 characters long.")
+    return secret_key
+
+
+SECRET_KEY = _get_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
