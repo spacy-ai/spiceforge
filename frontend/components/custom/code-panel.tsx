@@ -4,46 +4,53 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Copy, Terminal } from "lucide-react"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
+import { useState } from "react"
 
 export function CodePanel() {
-  return (
-    <ResizablePanelGroup direction="vertical" className="h-full">
-      <ResizablePanel defaultSize={60} minSize={30}>
-        <div className="flex h-full flex-col bg-card">
-          <div className="flex items-center justify-end border-b border-border px-3 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-card-foreground hover:bg-secondary"
-            >
-              <Copy className="h-4 w-4" />
-              Copy
-            </Button>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-4">
-              <pre className="rounded-lg border border-border bg-secondary/40 p-4 font-mono text-sm text-secondary-foreground">
-                <code className="text-muted-foreground">
-{`// OpenSCAD Code Editor
-// Your generated code will appear here
 
-// Example:
-module parametric_box(width, height, depth) {
-  cube([width, height, depth]);
+  const[netlist, setNetlist] = useState("hello world");
+  const [copied, setCopied] = useState(false);
+
+  async function copyTextToClipboard(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 3000);
+
+  } catch (err) {
+    console.error('Failed to copy: ', err);
+  }
 }
 
-// Call the module
-parametric_box(50, 30, 20);`}
-                </code>
-              </pre>
-            </div>
-          </ScrollArea>
-          <div className="flex items-center justify-center border-t border-border py-8 text-muted-foreground">
-            Loading...
-          </div>
-        </div>
-      </ResizablePanel>
+  return (
+      <ResizablePanelGroup direction="vertical" className="h-full">
+      <ResizablePanel defaultSize={60} minSize={30}>
+    <div className="relative h-full bg-card">
       
+    <textarea
+      value={netlist}
+      onChange={(e) => setNetlist(e.target.value)}
+      className="w-full h-full resize-none bg-secondary/40 p-4 pr-24 font-mono text-sm text-secondary-foreground focus:outline-none"
+    />
+
+      <div className="absolute top-2 right-2">
+     <Button
+      variant="ghost"
+      size="sm"
+      className="px-3 py-1.5 gap-2 text-card-foreground hover:bg-secondary"
+      onClick={() => copyTextToClipboard(netlist)}
+    >
+      <Copy className="h-4 w-4" />
+      {copied ? "Copied!" : "Copy"}
+    </Button>
+    </div>
+
+    </div>
+  </ResizablePanel>
+        
       <ResizableHandle className="bg-border" />
       
       <ResizablePanel defaultSize={40} minSize={20}>
