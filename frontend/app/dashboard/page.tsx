@@ -36,7 +36,6 @@ export default function SpacyAIPage() {
         direction="horizontal"
         className="flex-1"
       >
-        {/* Left Panel - Code Editor & Console */}
         {showCode && (
           <>
             <ResizablePanel 
@@ -51,7 +50,6 @@ export default function SpacyAIPage() {
           </>
         )}
         
-        {/* Center Panel - 3D Preview */}
         <ResizablePanel 
           defaultSize={getPreviewSize()} 
           minSize={30}
@@ -59,7 +57,6 @@ export default function SpacyAIPage() {
           <PreviewPanel />
         </ResizablePanel>
         
-        {/* Right Panel - Chat */}
         {showChat && (
           <>
             <ResizableHandle withHandle className="bg-border hover:bg-primary/50 transition-colors" />
