@@ -5,3 +5,10 @@ uvicorn==0.44.0
 alembic==1.13.2
 python-dotenv==1.0.1
 SQLAlchemy==2.0.32
+python-jose[cryptography]
+pydantic[email]
+passlib[bcrypt]
+bcrypt==4.0.1
+numpy==2.2.6
+spicelib==1.4.6
+schemdraw==0.21

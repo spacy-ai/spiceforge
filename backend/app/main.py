@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from  app.api.routes.auth import router as auth_router
+from app.api.routes.simulate import router as simulate_router
+from app.api.routes.measure import router as measure_router
 
-from .api.routes.simulate import router as simulate_router
 
 
 def create_app() -> FastAPI:
@@ -13,7 +15,9 @@ def create_app() -> FastAPI:
 			"docs": "/docs",
 		}
 
-	app.include_router(simulate_router, prefix="/api")
+	app.include_router(simulate_router, tags=["simulation"])
+	app.include_router(auth_router, prefix="/auth", tags=["auth"])
+	app.include_router(measure_router, prefix="/measure", tags=["measurement"])
 	return app
 
 

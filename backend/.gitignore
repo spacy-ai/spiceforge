@@ -4,3 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+*.png
+*.svg
+versions/
+*.code-workspace
