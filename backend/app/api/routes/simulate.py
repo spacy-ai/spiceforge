@@ -14,7 +14,7 @@ router = APIRouter(tags=["simulation"])
 
 
 
-@router.post("/simulate", response_model=SimulationResponse)
+@router.post("/", response_model=SimulationResponse)
 async def simulate(payload: SimulationRequest) -> SimulationResponse:
     schematic = None
     try:
