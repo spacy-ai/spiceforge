@@ -15,7 +15,7 @@ def create_app() -> FastAPI:
 			"docs": "/docs",
 		}
 
-	app.include_router(simulate_router, prefix="/simulate", tags=["simulation"])
+	app.include_router(simulate_router, tags=["simulation"])
 	app.include_router(auth_router, prefix="/auth", tags=["auth"])
 	app.include_router(measure_router, prefix="/measure", tags=["measurement"])
 	return app
