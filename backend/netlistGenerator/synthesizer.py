@@ -295,13 +295,22 @@ OUTPUT REQUIREMENTS:
 - The code must instantiate CircuitBuilder and produce a `netlist` string as the final variable.
 - Follow SPICE/LTspice conventions: proper node names, device prefixes, SPICE syntax.
 - Include all components with correct parameters and node connections.
-- Add required .AC, .DC, .TRAN, .OP, or .DC_SWEEP analysis directives.
+- Add ONLY the analysis requested in the blueprint (one of .AC, .DC, .TRAN, .OP, or .DC_SWEEP).
 
 NAMING RULE (CRITICAL):
-- Component names must NOT include prefixes like R, C, L, V, I, D, M, Q, U.
-- Use only numeric identifiers like "1", "2", "3" or simple names.
-- CircuitBuilder automatically adds the correct prefix (R for resistor, C for capacitor, V for voltage source, etc.).
-- Example: builder.resistor("1", "n1", "n2", 1000) → produces "R1 n1 n2 1000" in netlist
+- Component names MUST include explicit prefixes: V1, R1, C1, L1, I1, D1, M1, Q1, U1, etc.
+- Do NOT use bare numbers like "1" — always use "V1", "R1", "C1", etc.
+- Example: builder.resistor("R1", "n1", "n2", "1k") → produces "R1 n1 n2 1k"
+- Example: builder.voltage_source("V1", "in", "0", dc=5) → produces "V1 in 0 DC 5"
+
+TITLE RULE:
+- Use builder.title() with clean, trimmed text (no extra whitespace)
+- Example: builder.title("RC low pass filter") — NOT "  RC low pass filter  "
+
+ANALYSIS RULE:
+- Include ONLY the analysis type specified in the blueprint
+- For AC analysis: builder.ac_analysis(1, 1000000, 100)
+- Do NOT add extra analyses unless explicitly requested
 
 PYTHON CIRCUIT BUILDER API:
 - builder = CircuitBuilder()
@@ -359,8 +368,6 @@ Return only the Python code. No markdown fences, no explanation."""
         )
 
     def _normalize_code(self, code: str) -> str:
-        for prefix in self._COMPONENT_PREFIXES:
-            code = code.replace(f'"{prefix}', '"').replace(f"'{prefix}", "'")
         return code
 
     def generate_python_code(self, blueprint: dict) -> str:
@@ -424,6 +431,23 @@ Return only the Python code. No markdown fences, no explanation."""
 
     @staticmethod
     def _build_generation_prompt(blueprint: dict) -> str:
+        analyses = blueprint.get("analyses", [])
+        analysis_info = ""
+        if analyses:
+            a = analyses[0]
+            atype = a.get("type", "").lower()
+            params = a.get("parameters", {})
+            if atype == "ac":
+                analysis_info = f"Use: builder.ac_analysis({params.get('start_freq', 1)}, {params.get('stop_freq', 1000000)}, {params.get('num_points', 100)})"
+            elif atype == "transient":
+                analysis_info = f"Use: builder.transient({params.get('tstart', 0)}, {params.get('tstop', 0.001)}, {params.get('tstep', 0.000001)})"
+            elif atype == "dc":
+                analysis_info = f"Use: builder.dc_sweep('{params.get('source', 'V1')}', {params.get('start', 0)}, {params.get('stop', 1)}, {params.get('step', 0.1)})"
+            elif atype == "op":
+                analysis_info = "Use: builder.operating_point()"
+            elif atype == "dc_sweep":
+                analysis_info = f"Use: builder.dc_sweep('{params.get('source', 'V1')}', {params.get('start', 0)}, {params.get('stop', 1)}, {params.get('step', 0.1)})"
+
         return textwrap.dedent(f"""
             Transform this validated circuit blueprint into Python code using the CircuitBuilder API.
 
@@ -432,15 +456,18 @@ Return only the Python code. No markdown fences, no explanation."""
 
             Generate clean, executable Python code that:
             1. Creates a CircuitBuilder instance: builder = CircuitBuilder()
-            2. Sets title and global node (ground = "0")
+            2. Sets title with builder.title("description") — trim whitespace
             3. Defines any required .MODEL statements for active devices
             4. Adds all components with proper node connections
-            5. Adds analysis directives
+            5. Adds ONE analysis only: {analysis_info}
             6. Ends with: netlist = builder.netlist()
-            IMPORTANT:
+
+            CRITICAL RULES:
             - Do NOT add any import statements.
-            - Ensure node names match the blueprint exactly.
-            - Use proper SPICE value strings (e.g. "10k", "1u", "100n").
+            - Use explicit component names with prefixes: V1, R1, C1, L1, etc. (NOT "1", "2", etc.)
+            - Node names must match the blueprint exactly.
+            - Use proper SPICE value strings (e.g. "1k", "1u", "100n").
+            - Do NOT add extra analyses.
         """).strip()
 
     @staticmethod

@@ -243,29 +243,27 @@ class CircuitBuilder:
 
     def netlist(self) -> str:
         lines = []
-        lines.append(f"* {self._title}")
-        lines.append("")
+        lines.append(f"* {self._title.strip()}")
 
         for comment in self._comments:
             lines.append(comment)
-        if self._comments:
-            lines.append("")
 
         if self._global_node != "0":
             lines.append(f".global {self._global_node}")
-            lines.append("")
 
         for model in self._models:
             lines.append(model)
-        if self._models:
-            lines.append("")
 
         lines.extend(self._components)
-        lines.append("")
 
-        for analysis in self._analyses:
-            lines.append(analysis)
-        lines.append("")
+        if self._analyses:
+            lines.append("")
+            for analysis in self._analyses:
+                lines.append(analysis)
+
         lines.append(".end")
 
-        return "\n".join(lines)
+        netlist = "\n".join(lines)
+        while "\n\n\n" in netlist:
+            netlist = netlist.replace("\n\n\n", "\n\n")
+        return netlist.rstrip() + "\n"
