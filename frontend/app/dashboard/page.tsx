@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/custom/header"
 import { CodePanel } from "@/components/custom/code-panel"
 import { PreviewPanel } from "@/components/custom/preview-panel"
@@ -11,9 +12,66 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 
+interface CircuitData {
+  id: number
+  name: string
+  netlist: string
+  svgContent: string
+}
+
 export default function SpacyAIPage() {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+  const searchParams = useSearchParams()
   const [showCode, setShowCode] = useState(true)
   const [showChat, setShowChat] = useState(true)
+  const [circuitId, setCircuitId] = useState<string>("1")
+  const [circuitData, setCircuitData] = useState<CircuitData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [netlist, setNetlist] = useState("")
+
+  // Update circuit data when circuitId changes
+  useEffect(() => {
+    if (!searchParams) return
+    
+    const id = searchParams.get("circuitid") || "1"
+    
+    setCircuitId(id)
+    setLoading(true)
+    
+    const fetchCircuit = async () => {
+      try {
+        const [circuitResponse, svgResponse] = await Promise.all([
+          fetch(`${apiBase}/circuits/${id}`),
+          fetch(`${apiBase}/circuits/${id}/svg?renderer=interactive`),
+        ])
+
+        if (!circuitResponse.ok || !svgResponse.ok) {
+          throw new Error(`Failed to load circuit ${id}`)
+        }
+
+        const circuitJson = await circuitResponse.json()
+        const svgText = await svgResponse.text()
+
+        const data: CircuitData = {
+          id: circuitJson.id,
+          name: circuitJson.name ?? `Circuit ${circuitJson.id}`,
+          netlist: circuitJson.netlist,
+          svgContent: svgText,
+        }
+
+        setCircuitData(data)
+        setNetlist(data.netlist)
+      } catch (error) {
+        console.error("Failed to load circuit:", error)
+        setCircuitData(null)
+        setNetlist("")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchCircuit()
+  }, [searchParams, apiBase])
 
   const toggleCode = () => setShowCode(!showCode)
   const toggleChat = () => setShowChat(!showChat)
@@ -21,6 +79,18 @@ export default function SpacyAIPage() {
     if (!showCode && !showChat) return 100
     if (!showCode || !showChat) return 70
     return 50
+  }
+
+  const handleSimulate = (updatedNetlist: string, updatedSvg?: string) => {
+    setNetlist(updatedNetlist)
+
+    if (circuitData) {
+      setCircuitData({
+        ...circuitData,
+        netlist: updatedNetlist,
+        svgContent: updatedSvg ?? circuitData.svgContent,
+      })
+    }
   }
 
   return (
@@ -42,8 +112,9 @@ export default function SpacyAIPage() {
               defaultSize={25} 
               minSize={15}
               maxSize={40}
+              key={`code-${circuitId}`}
             >
-              <CodePanel />
+              <CodePanel key={`netlist-${circuitId}`} onSimulate={handleSimulate} initialNetlist={netlist} circuitId={circuitId} />
             </ResizablePanel>
             
             <ResizableHandle withHandle className="bg-border hover:bg-primary/50 transition-colors" />
@@ -53,8 +124,9 @@ export default function SpacyAIPage() {
         <ResizablePanel 
           defaultSize={getPreviewSize()} 
           minSize={30}
+          key={`preview-${circuitId}`}
         >
-          <PreviewPanel />
+          <PreviewPanel key={`svg-${circuitId}`} circuitId={circuitId} svgContent={circuitData?.svgContent} />
         </ResizablePanel>
         
         {showChat && (

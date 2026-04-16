@@ -29,6 +29,7 @@ async def simulate(payload: SimulationRequest) -> SimulationResponse:
             schematic = generate_schematic(
                 payload.netlist,
                 save_to_project_root=save_schematic,
+                renderer="interactive",
             )
     except NgspiceFailure as exc:
         detail = exc.detail

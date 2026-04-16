@@ -11,11 +11,11 @@ from app.core.schematic import ParsedComponent, parse_netlist_components
 # Layout constants (pixel coordinates)
 # ---------------------------------------------------------------------------
 
-_COL_SOURCES = 100
-_COL_SERIES = 300
-_COL_SHUNT = 500
-_Y_START = 100
-_Y_SPACING = 120
+_COL_SOURCES = 120
+_COL_SERIES = 380
+_COL_SHUNT = 760
+_Y_START = 180
+_Y_SPACING = 240
 
 # Pin offsets per component type (dx, dy from center)
 _PIN_OFFSETS: dict[str, list[tuple[float, float]]] = {
@@ -535,7 +535,7 @@ def _build_svg_defs(svg: ET.Element, min_x: float, min_y: float, vb_w: float, vb
     ET.SubElement(
         svg,
         "rect",
-        {"x": str(min_x), "y": str(min_y), "width": str(vb_w), "height": str(vb_h), "fill": "#1e1e1e"},
+        {"x": str(min_x), "y": str(min_y), "width": str(vb_w), "height": str(vb_h), "fill": "none"},
     )
 
 
@@ -562,10 +562,18 @@ def _render_components(svg: ET.Element, placed: list[_PlacedComponent]) -> dict[
         for elem in drawer():
             g.append(elem)
 
+        label_dx = 42 if pc.rotation == 90 else 22
+        label_dy = -16 if pc.rotation == 90 else -10
         label = ET.SubElement(
             svg,
             "text",
-            {"x": str(pc.x + 15), "y": str(pc.y - 5), "class": "comp-label", "data-ref": comp.ref},
+            {
+                "x": str(pc.x + label_dx),
+                "y": str(pc.y + label_dy),
+                "class": "comp-label",
+                "data-ref": comp.ref,
+                "text-anchor": "start",
+            },
         )
         label.text = f"{comp.ref}: {comp.value}"
 
@@ -629,7 +637,7 @@ def _build_svg(
         all_x.append(gx)
         all_y.append(gy + 15)
 
-    padding = 60
+    padding = 160
     if all_x and all_y:
         min_x = min(all_x) - padding
         min_y = min(all_y) - padding
@@ -719,7 +727,7 @@ def render_interactive_svg(
         )
         style = ET.SubElement(svg, "style")
         style.text = ".comp-body { stroke: #4fc3f7; fill: none; }"
-        ET.SubElement(svg, "rect", {"x": "0", "y": "0", "width": str(width), "height": str(height), "fill": "#1e1e1e"})
+        ET.SubElement(svg, "rect", {"x": "0", "y": "0", "width": str(width), "height": str(height), "fill": "none"})
         return ET.tostring(svg, encoding="unicode", xml_declaration=False)
 
     placed = _layout_components(components)
