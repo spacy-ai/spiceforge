@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Copy, Terminal, Play, CheckCircle, AlertCircle } from "lucide-react"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { useState, useEffect, useRef } from "react"
+import { apiBase } from "@/lib/config"
 
 interface ConsoleMessage {
   id: string
@@ -14,7 +15,6 @@ interface ConsoleMessage {
 }
 
 export function CodePanel({ onSimulate, initialNetlist = "", circuitId }: { onSimulate?: (netlist: string, svgContent?: string) => void; initialNetlist?: string; circuitId?: string }) {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
   const [netlist, setNetlist] = useState(initialNetlist || ".title New Circuit\n\n.control\nop\n.endc\n.end")
   const [copied, setCopied] = useState(false)
   const [isSimulating, setIsSimulating] = useState(false)

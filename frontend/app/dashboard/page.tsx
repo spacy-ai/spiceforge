@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/custom/header"
 import { CodePanel } from "@/components/custom/code-panel"
@@ -11,6 +11,7 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable"
+import { apiBase } from "@/lib/config"
 
 interface CircuitData {
   id: number
@@ -19,8 +20,7 @@ interface CircuitData {
   svgContent: string
 }
 
-export default function SpacyAIPage() {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+function DashboardContent() {
   const searchParams = useSearchParams()
   const [showCode, setShowCode] = useState(true)
   const [showChat, setShowChat] = useState(true)
@@ -29,7 +29,6 @@ export default function SpacyAIPage() {
   const [loading, setLoading] = useState(false)
   const [netlist, setNetlist] = useState("")
 
-  // Update circuit data when circuitId changes
   useEffect(() => {
     if (!searchParams) return
     
@@ -144,5 +143,19 @@ export default function SpacyAIPage() {
         )}
       </ResizablePanelGroup>
     </div>
+  )
+}
+
+export default function SpacyAIPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-screen items-center justify-center bg-background text-sm text-muted-foreground">
+          Loading dashboard...
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   )
 }

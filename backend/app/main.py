@@ -30,7 +30,7 @@ def create_app() -> FastAPI:
 	app.include_router(auth_router, prefix="/auth", tags=["auth"])
 	app.include_router(circuits_router, tags=["circuits"])
 	app.include_router(measure_router, prefix="/measure", tags=["measurement"])
-	app.include_router(export_router, prefix="/export", tags=["export"])
+	app.include_router(export_router, tags=["export"])
 	return app
 
 

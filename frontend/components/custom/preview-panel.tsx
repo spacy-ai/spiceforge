@@ -11,7 +11,7 @@ interface PreviewPanelProps {
   svgContent?: string
 }
 
-export function PreviewPanel({ circuitId = "circuit_001", svgContent }: PreviewPanelProps) {
+export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
   const [zoom, setZoom] = useState(0.75)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
@@ -147,7 +147,9 @@ export function PreviewPanel({ circuitId = "circuit_001", svgContent }: PreviewP
       <div className="flex items-center justify-between border-t border-border px-4 py-2">
         <span className="text-xs text-muted-foreground">Zoom: {(zoom * 100).toFixed(0)}%</span>
         <div className="flex items-center gap-2">
-          <ExportPopup />
+          <ExportPopup 
+          circuitId={circuitId}
+          />
         </div>
       </div>
     </div>

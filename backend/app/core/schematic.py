@@ -187,14 +187,14 @@ def _draw_source_ground(
         d.add(elm.Ground().at(ground_pos))
 
 
-def render_schematic_svg(netlist: str) -> str:
+def _build_schematic_drawing(netlist: str, *, backend: str) -> schemdraw.Drawing:
     components = parse_netlist_components(netlist)
     if not components:
         raise ValueError("Netlist contains no components to draw")
 
     sources, series, shunt = _classify_components(components)
 
-    drawing = schemdraw.Drawing(backend="svg", show=False)
+    drawing = schemdraw.Drawing(backend=backend, show=False)
     node_positions: dict[str, tuple[float, float]] = {}
 
     _draw_sources(drawing, sources, node_positions)
@@ -202,4 +202,14 @@ def render_schematic_svg(netlist: str) -> str:
     _draw_shunt(drawing, shunt, node_positions)
     _draw_source_ground(drawing, sources, node_positions)
 
+    return drawing
+
+
+def render_schematic_svg(netlist: str) -> str:
+    drawing = _build_schematic_drawing(netlist, backend="svg")
     return drawing.get_imagedata("svg").decode("utf-8")
+
+
+def render_schematic_png(netlist: str) -> bytes:
+    drawing = _build_schematic_drawing(netlist, backend="png")
+    return drawing.get_imagedata("png")

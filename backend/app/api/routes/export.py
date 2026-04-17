@@ -4,9 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.core.dependencies import get_db, get_current_user
+from app.core.dependencies import get_db
 from app.models.circuit import Circuit
-from app.models.user import User
 from app.schema.export import ExportKicadRequest, ExportKicadResponse
 from app.services.export_store import export_store
 from app.services.kicad_export import create_kicad_export
@@ -19,7 +18,6 @@ def export_kicad(
     payload: ExportKicadRequest,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ) -> ExportKicadResponse:
     netlist = payload.netlist
     circuit_id = payload.circuit_id
@@ -27,7 +25,7 @@ def export_kicad(
     if circuit_id is not None:
         circuit = (
             db.query(Circuit)
-            .filter(Circuit.id == circuit_id, Circuit.user_id == current_user.id)
+            .filter(Circuit.id == circuit_id)
             .first()
         )
         if circuit is None:
@@ -40,7 +38,7 @@ def export_kicad(
     record, warnings = create_kicad_export(
         netlist=netlist,
         filename=payload.filename,
-        user_id=current_user.id,
+        user_id=None,
     )
     download_url = str(request.url_for("download_kicad", export_id=record.export_id))
 
@@ -58,11 +56,10 @@ def export_kicad(
 def download_kicad(
     export_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ) -> FileResponse:
     _ = db
     record = export_store.get(export_id)
-    if record is None or record.user_id != current_user.id:
+    if record is None:
         raise HTTPException(status_code=404, detail="Export not found")
     return FileResponse(
         record.file_path,

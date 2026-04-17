@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_db
 from app.models.circuit import Circuit
 from app.schema.circuit import CircuitCreateRequest, CircuitResponse
+from app.core.schematic import render_schematic_png
 from app.services.schematic import generate_schematic
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
@@ -65,16 +66,16 @@ def get_circuit_svg(
     return Response(content=svg.content, media_type="image/svg+xml", headers=headers)
 
 
-@router.get("/{circuit_id}/svg/download")
+@router.get("/{circuit_id}/png/download")
 def download_circuit_svg(
     circuit_id: int,
     db: Session = Depends(get_db),
 ) -> Response:
     circuit = _get_circuit_or_404(db, circuit_id)
-    svg = generate_schematic(circuit.netlist, renderer="schemdraw")
+    png_data = render_schematic_png(circuit.netlist)
     headers = {
-        "Content-Disposition": f'attachment; filename="circuit_{circuit_id}.svg"',
+        "Content-Disposition": f'attachment; filename="circuit_{circuit_id}.png"',
         "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:",
         "X-Content-Type-Options": "nosniff",
     }
-    return Response(content=svg.content, media_type="image/svg+xml", headers=headers)
+    return Response(content=png_data, media_type="image/png", headers=headers)
