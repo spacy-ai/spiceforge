@@ -12,6 +12,7 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable"
 import { apiBase } from "@/lib/config"
+import type { SimulationResponse } from "@/lib/types/simulation"
 
 interface CircuitData {
   id: number
@@ -28,6 +29,7 @@ function DashboardContent() {
   const [circuitData, setCircuitData] = useState<CircuitData | null>(null)
   const [loading, setLoading] = useState(false)
   const [netlist, setNetlist] = useState("")
+  const [simulation, setSimulation] = useState<SimulationResponse | null>(null)
 
   useEffect(() => {
     if (!searchParams) return
@@ -80,8 +82,15 @@ function DashboardContent() {
     return 50
   }
 
-  const handleSimulate = (updatedNetlist: string, updatedSvg?: string) => {
+  const handleSimulate = (
+    updatedNetlist: string,
+    updatedSvg?: string,
+    simulationResponse?: SimulationResponse,
+  ) => {
     setNetlist(updatedNetlist)
+    if (simulationResponse) {
+      setSimulation(simulationResponse)
+    }
 
     if (circuitData) {
       setCircuitData({
@@ -125,7 +134,12 @@ function DashboardContent() {
           minSize={30}
           key={`preview-${circuitId}`}
         >
-          <PreviewPanel key={`svg-${circuitId}`} circuitId={circuitId} svgContent={circuitData?.svgContent} />
+          <PreviewPanel
+            key={`svg-${circuitId}`}
+            circuitId={circuitId}
+            svgContent={circuitData?.svgContent}
+            simulation={simulation}
+          />
         </ResizablePanel>
         
         {showChat && (

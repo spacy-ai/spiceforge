@@ -1,22 +1,25 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { CircuitBoard, Download, ZoomIn, ZoomOut } from "lucide-react"
+import { CircuitBoard, Pencil, ZoomIn, ZoomOut } from "lucide-react"
 import { ExportPopup } from "@/components/custom/exportPopup"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { AnalysisPanel } from "@/components/custom/analysis-panel"
+import type { SimulationResponse } from "@/lib/types/simulation"
 
 interface PreviewPanelProps {
   circuitId?: string
   svgContent?: string
+  simulation?: SimulationResponse | null
 }
 
-export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
+export function PreviewPanel({ circuitId, svgContent, simulation }: PreviewPanelProps) {
   const [zoom, setZoom] = useState(0.75)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isLoading, setIsLoading] = useState(false)
+  const [svgscreen,setScreen] = useState(true)
   const svgContainerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<HTMLDivElement>(null)
 
@@ -55,10 +58,6 @@ export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
     <div className="flex h-full flex-col bg-transparent">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-card-foreground">
-          <CircuitBoard className="h-4 w-4 text-primary" />
-          <span>{circuitId}</span>
-        </div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -85,9 +84,23 @@ export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
             <span className="text-xs font-bold">1:1</span>
           </Button>
         </div>
+        <div>
+          <Button
+           variant="outline"
+           size="sm"
+           className="border-orange-400/60 bg-orange-400/10 text-orange-900 hover:bg-orange-400/20 dark:text-orange-100"
+           onClick={()=> setScreen(!svgscreen)}
+          >
+          {svgscreen? <Pencil className="h-2 w-2  " /> : <CircuitBoard className="h-2 w-2  " />}
+          <span className="text-xs font-bold">
+            {svgscreen? "Analysis" : "Circuit"}
+          </span>
+          </Button>
+        </div>
       </div>
 
       {/* SVG Viewer */}
+      {svgscreen? 
       <div
         ref={svgContainerRef}
         className="flex-1 overflow-hidden bg-transparent relative"
@@ -97,6 +110,7 @@ export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
         style={{ cursor: isDragging ? "grabbing" : "grab" }}
+        id="svg-container"
       >
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -141,7 +155,7 @@ export function PreviewPanel({ circuitId, svgContent }: PreviewPanelProps) {
             </div>
           </div>
         )}
-      </div>
+      </div> : <AnalysisPanel simulation={simulation} />}
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-border px-4 py-2">
