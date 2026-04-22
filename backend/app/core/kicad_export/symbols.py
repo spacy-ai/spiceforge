@@ -331,7 +331,7 @@ def build_lib_symbols(used_lib_ids: set[str]) -> str:
     return "\n".join(parts)
 
 
-_GND_LIB_SYMBOL = """
+GND_LIB_SYMBOL = """
     (symbol \"power:GND\" (power) (pin_names (offset 0)) (exclude_from_sim no) (in_bom yes) (on_board yes)
       (property \"Reference\" \"#PWR\" (at 0 -6.35 0) (effects (font (size 1.27 1.27)) hide))
       (property \"Value\" \"GND\" (at 0 -3.81 0) (effects (font (size 1.27 1.27))))
