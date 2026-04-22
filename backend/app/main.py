@@ -5,6 +5,7 @@ from app.api.routes.circuits import router as circuits_router
 from app.api.routes.export import router as export_router
 from app.api.routes.simulate import router as simulate_router
 from app.api.routes.measure import router as measure_router
+from app.api.routes.netlist_gen import router as netlist_gen_router
 
 
 
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
 	app.include_router(circuits_router, tags=["circuits"])
 	app.include_router(measure_router, prefix="/measure", tags=["measurement"])
 	app.include_router(export_router, tags=["export"])
+	app.include_router(netlist_gen_router, prefix="/netlist", tags=["netlist generation"])
 	return app
 
 

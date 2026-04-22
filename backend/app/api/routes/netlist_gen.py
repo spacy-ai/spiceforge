@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-import os
-import sys
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from app.services.circuit_planner import Planner
+from app.core.blueprint_validator import validate_circuit_blueprint, ValidationResult
+from app.services.netlist_synthesizer import SpecialistSynthesizer
 
-from planner import Planner
-from validator import validate_circuit_blueprint, ValidationResult
-from synthesizer import SpecialistSynthesizer
-
-app = FastAPI(title="Netlist Generation Service")
+router = APIRouter(tags=["netlist generation"])
 
 
 class GenerateNetlistRequest(BaseModel):
@@ -39,17 +35,17 @@ class ValidateResponse(BaseModel):
     error: Optional[str] = None
 
 
-@app.get("/")
+@router.get("/")
 def root():
     return {"service": "Netlist Generation Service", "status": "ready"}
 
 
-@app.get("/health")
+@router.get("/health")
 def health():
     return {"status": "healthy"}
 
 
-@app.post("/generate-netlist", response_model=GenerateNetlistResponse)
+@router.post("/generate-netlist", response_model=GenerateNetlistResponse)
 def generate_netlist(request: GenerateNetlistRequest):
     try:
         planner = Planner(
@@ -117,7 +113,7 @@ def generate_netlist(request: GenerateNetlistRequest):
         )
 
 
-@app.post("/validate", response_model=ValidateResponse)
+@router.post("/validate", response_model=ValidateResponse)
 def validate_blueprint(request: ValidateRequest):
     try:
         result = validate_circuit_blueprint(request.blueprint)
@@ -143,7 +139,4 @@ def validate_blueprint(request: ValidateRequest):
         )
 
 
-if __name__ == "__main__":
-    import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)

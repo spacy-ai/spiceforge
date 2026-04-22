@@ -6,8 +6,8 @@ import textwrap
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from builder import CircuitBuilder
-from planner import OpenCodeClient
+from app.core.netlist_builder import CircuitBuilder
+from app.services.circuit_planner import OpenCodeClient
 
 
 _ALLOWED_BUILTINS: dict[str, Any] = {
