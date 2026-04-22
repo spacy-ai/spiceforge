@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Header } from "@/components/custom/header"
 import { CodePanel } from "@/components/custom/code-panel"
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/resizable"
 import { apiBase } from "@/lib/config"
 import type { SimulationResponse } from "@/lib/types/simulation"
+import type { ImperativePanelHandle } from "react-resizable-panels"
 
 interface CircuitData {
   id: number
@@ -30,6 +31,8 @@ function DashboardContent() {
   const [loading, setLoading] = useState(false)
   const [netlist, setNetlist] = useState("")
   const [simulation, setSimulation] = useState<SimulationResponse | null>(null)
+  const codePanelRef = useRef<ImperativePanelHandle>(null)
+  const chatPanelRef = useRef<ImperativePanelHandle>(null)
 
   useEffect(() => {
     if (!searchParams) return
@@ -74,13 +77,26 @@ function DashboardContent() {
     fetchCircuit()
   }, [searchParams, apiBase])
 
-  const toggleCode = () => setShowCode(!showCode)
-  const toggleChat = () => setShowChat(!showChat)
-  const getPreviewSize = () => {
-    if (!showCode && !showChat) return 100
-    if (!showCode || !showChat) return 70
-    return 50
-  }
+  const toggleCode = () => setShowCode((prev) => !prev)
+  const toggleChat = () => setShowChat((prev) => !prev)
+
+  useEffect(() => {
+    if (!codePanelRef.current) return
+    if (showCode) {
+      codePanelRef.current.expand()
+    } else {
+      codePanelRef.current.collapse()
+    }
+  }, [showCode])
+
+  useEffect(() => {
+    if (!chatPanelRef.current) return
+    if (showChat) {
+      chatPanelRef.current.expand()
+    } else {
+      chatPanelRef.current.collapse()
+    }
+  }, [showChat])
 
   const handleSimulate = (
     updatedNetlist: string,
@@ -114,23 +130,29 @@ function DashboardContent() {
         direction="horizontal"
         className="flex-1"
       >
-        {showCode && (
-          <>
-            <ResizablePanel 
-              defaultSize={25} 
-              minSize={15}
-              maxSize={40}
-              key={`code-${circuitId}`}
-            >
-              <CodePanel key={`netlist-${circuitId}`} onSimulate={handleSimulate} initialNetlist={netlist} circuitId={circuitId} />
-            </ResizablePanel>
-            
-            <ResizableHandle withHandle className="bg-border hover:bg-primary/50 transition-colors" />
-          </>
-        )}
-        
-        <ResizablePanel 
-          defaultSize={getPreviewSize()} 
+        <ResizablePanel
+          id="code-panel"
+          order={1}
+          defaultSize={25}
+          minSize={15}
+          maxSize={40}
+          collapsible
+          collapsedSize={0}
+          ref={codePanelRef}
+          key={`code-${circuitId}`}
+        >
+          <CodePanel key={`netlist-${circuitId}`} onSimulate={handleSimulate} initialNetlist={netlist} circuitId={circuitId} />
+        </ResizablePanel>
+
+        <ResizableHandle
+          withHandle
+          className={showCode ? "bg-border hover:bg-primary/50 transition-colors" : "bg-border opacity-0 pointer-events-none"}
+        />
+
+        <ResizablePanel
+          id="preview-panel"
+          order={2}
+          defaultSize={50}
           minSize={30}
           key={`preview-${circuitId}`}
         >
@@ -141,20 +163,24 @@ function DashboardContent() {
             simulation={simulation}
           />
         </ResizablePanel>
-        
-        {showChat && (
-          <>
-            <ResizableHandle withHandle className="bg-border hover:bg-primary/50 transition-colors" />
-            
-            <ResizablePanel 
-              defaultSize={25} 
-              minSize={20}
-              maxSize={40}
-            >
-              <ChatPanel />
-            </ResizablePanel>
-          </>
-        )}
+
+        <ResizableHandle
+          withHandle
+          className={showChat ? "bg-border hover:bg-primary/50 transition-colors" : "bg-border opacity-0 pointer-events-none"}
+        />
+
+        <ResizablePanel
+          id="chat-panel"
+          order={3}
+          defaultSize={25}
+          minSize={20}
+          maxSize={40}
+          collapsible
+          collapsedSize={0}
+          ref={chatPanelRef}
+        >
+          <ChatPanel />
+        </ResizablePanel>
       </ResizablePanelGroup>
     </div>
   )
