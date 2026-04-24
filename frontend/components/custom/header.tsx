@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Plus, Sun, Moon } from "lucide-react"
 import { useTheme } from "next-themes"
+import Link from "next/link"
 
 interface HeaderProps {
   showCode: boolean
@@ -21,8 +22,8 @@ export function Header({ showCode, showChat, onToggleCode, onToggleChat }: Heade
 
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
-      {/* Logo - hidden on very small screens */}
-      <div className="hidden items-center gap-3 sm:flex">
+      <Link href="/dashboard" className="hidden items-center gap-3 sm:flex" >
+        
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
@@ -32,9 +33,8 @@ export function Header({ showCode, showChat, onToggleCode, onToggleChat }: Heade
         <Badge variant="secondary" className="text-xs">
           BETA
         </Badge>
-      </div>
+      </Link>
 
-      {/* Navigation - centered on small screens */}
       <nav className="flex flex-1 items-center justify-center gap-2 sm:flex-none sm:justify-start">
         <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
           Projects
