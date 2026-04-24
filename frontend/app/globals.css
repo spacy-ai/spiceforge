@@ -123,3 +123,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+.light-surface {
+  color-scheme: light;
+  --background: #f4f1db;
+  --foreground: #2a241b;
+  --card: #ffffff;
+  --card-foreground: #2a241b;
+  --popover: #ffffff;
+  --popover-foreground: #2a241b;
+  --primary: #ff6600;
+  --primary-foreground: #ffffff;
+  --secondary: #e8e5d0;
+  --secondary-foreground: #2a241b;
+  --muted: #e8e5d0;
+  --muted-foreground: #7a6e5f;
+  --accent: #ff6600;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #d4d1bc;
+  --input: #d4d1bc;
+  --ring: #ff6600;
+  --chart-1: #ff6600;
+  --chart-2: #d97706;
+  --chart-3: #f59e0b;
+  --chart-4: #ea580c;
+  --chart-5: #9a3412;
+  --sidebar: #ece8d3;
+  --sidebar-foreground: #2a241b;
+  --sidebar-primary: #ff6600;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ddd7be;
+  --sidebar-accent-foreground: #2a241b;
+  --sidebar-border: #cdc5a8;
+  --sidebar-ring: #ff6600;
+}

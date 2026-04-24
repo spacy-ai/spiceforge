@@ -19,7 +19,7 @@ export function PreviewPanel({ circuitId, svgContent, simulation }: PreviewPanel
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isLoading, setIsLoading] = useState(false)
-  const [svgscreen,setScreen] = useState(true)
+  const [svgscreen, setScreen] = useState<"circuit" | "analysis">("circuit")
   const svgContainerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<HTMLDivElement>(null)
 
@@ -58,7 +58,8 @@ export function PreviewPanel({ circuitId, svgContent, simulation }: PreviewPanel
     <div className="flex h-full flex-col bg-transparent">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        <div className="flex items-center gap-1">
+        {svgscreen === "circuit" ? (
+          <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -83,24 +84,33 @@ export function PreviewPanel({ circuitId, svgContent, simulation }: PreviewPanel
           >
             <span className="text-xs font-bold">1:1</span>
           </Button>
-        </div>
+          </div>
+        ) : (
+          <div />
+        )}
         <div>
           <Button
            variant="outline"
            size="sm"
            className="border-orange-400/60 bg-orange-400/10 text-orange-900 hover:bg-orange-400/20 dark:text-orange-100"
-           onClick={()=> setScreen(!svgscreen)}
+           onClick={() =>
+             setScreen((prev) => (prev === "circuit" ? "analysis" : "circuit"))
+           }
           >
-          {svgscreen? <Pencil className="h-2 w-2  " /> : <CircuitBoard className="h-2 w-2  " />}
+          {svgscreen === "circuit" ? (
+            <Pencil className="h-2 w-2  " />
+          ) : (
+            <CircuitBoard className="h-2 w-2  " />
+          )}
           <span className="text-xs font-bold">
-            {svgscreen? "Analysis" : "Circuit"}
+            {svgscreen === "circuit" ? "Analysis" : "Circuit"}
           </span>
           </Button>
         </div>
       </div>
 
       {/* SVG Viewer */}
-      {svgscreen? 
+      {svgscreen === "circuit" ? 
       <div
         ref={svgContainerRef}
         className="flex-1 overflow-hidden bg-transparent relative"
