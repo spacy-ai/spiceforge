@@ -1,111 +1,107 @@
-"use client"
+'use client';
 
-import { Suspense, useEffect, useState, useRef } from "react"
-import { useSearchParams } from "next/navigation"
-import { Header } from "@/components/custom/header"
-import { CodePanel } from "@/components/custom/code-panel"
-import { PreviewPanel } from "@/components/custom/preview-panel"
-import { ChatPanel } from "@/components/custom/chat-panel"
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable"
-import { apiBase } from "@/lib/config"
-import type { SimulationResponse } from "@/lib/types/simulation"
-import type { ImperativePanelHandle } from "react-resizable-panels"
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Header } from '@/components/custom/header';
+import { CodePanel } from '@/components/custom/code-panel';
+import { PreviewPanel } from '@/components/custom/preview-panel';
+import { ChatPanel } from '@/components/custom/chat-panel';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { apiBase } from '@/lib/config';
+import type { SimulationResponse } from '@/lib/types/simulation';
+import type { ImperativePanelHandle } from 'react-resizable-panels';
 
 interface CircuitData {
-  id: number
-  name: string
-  netlist: string
-  svgContent: string
+  id: number;
+  name: string;
+  netlist: string;
+  svgContent: string;
 }
 
 function DashboardContent() {
-  const searchParams = useSearchParams()
-  const [showCode, setShowCode] = useState(true)
-  const [showChat, setShowChat] = useState(true)
-  const [circuitId, setCircuitId] = useState<string>("1")
-  const [circuitData, setCircuitData] = useState<CircuitData | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [netlist, setNetlist] = useState("")
-  const [simulation, setSimulation] = useState<SimulationResponse | null>(null)
-  const codePanelRef = useRef<ImperativePanelHandle>(null)
-  const chatPanelRef = useRef<ImperativePanelHandle>(null)
+  const searchParams = useSearchParams();
+  const [showCode, setShowCode] = useState(true);
+  const [showChat, setShowChat] = useState(true);
+  const [circuitId, setCircuitId] = useState<string>('1');
+  const [circuitData, setCircuitData] = useState<CircuitData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [netlist, setNetlist] = useState('');
+  const [simulation, setSimulation] = useState<SimulationResponse | null>(null);
+  const codePanelRef = useRef<ImperativePanelHandle>(null);
+  const chatPanelRef = useRef<ImperativePanelHandle>(null);
 
   useEffect(() => {
-    if (!searchParams) return
-    
-    const id = searchParams.get("circuitid") || "1"
-    
-    setCircuitId(id)
-    setLoading(true)
-    
+    if (!searchParams) return;
+
+    const id = searchParams.get('circuitid') || '1';
+
+    setCircuitId(id);
+    setLoading(true);
+
     const fetchCircuit = async () => {
       try {
         const [circuitResponse, svgResponse] = await Promise.all([
           fetch(`${apiBase}/circuits/${id}`),
           fetch(`${apiBase}/circuits/${id}/svg?renderer=interactive`),
-        ])
+        ]);
 
         if (!circuitResponse.ok || !svgResponse.ok) {
-          throw new Error(`Failed to load circuit ${id}`)
+          throw new Error(`Failed to load circuit ${id}`);
         }
 
-        const circuitJson = await circuitResponse.json()
-        const svgText = await svgResponse.text()
+        const circuitJson = await circuitResponse.json();
+        const svgText = await svgResponse.text();
 
         const data: CircuitData = {
           id: circuitJson.id,
           name: circuitJson.name ?? `Circuit ${circuitJson.id}`,
           netlist: circuitJson.netlist,
           svgContent: svgText,
-        }
+        };
 
-        setCircuitData(data)
-        setNetlist(data.netlist)
+        setCircuitData(data);
+        setNetlist(data.netlist);
       } catch (error) {
-        console.error("Failed to load circuit:", error)
-        setCircuitData(null)
-        setNetlist("")
+        console.error('Failed to load circuit:', error);
+        setCircuitData(null);
+        setNetlist('');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    
-    fetchCircuit()
-  }, [searchParams, apiBase])
+    };
 
-  const toggleCode = () => setShowCode((prev) => !prev)
-  const toggleChat = () => setShowChat((prev) => !prev)
+    fetchCircuit();
+  }, [searchParams, apiBase]);
+
+  const toggleCode = () => setShowCode((prev) => !prev);
+  const toggleChat = () => setShowChat((prev) => !prev);
 
   useEffect(() => {
-    if (!codePanelRef.current) return
+    if (!codePanelRef.current) return;
     if (showCode) {
-      codePanelRef.current.expand()
+      codePanelRef.current.expand();
     } else {
-      codePanelRef.current.collapse()
+      codePanelRef.current.collapse();
     }
-  }, [showCode])
+  }, [showCode]);
 
   useEffect(() => {
-    if (!chatPanelRef.current) return
+    if (!chatPanelRef.current) return;
     if (showChat) {
-      chatPanelRef.current.expand()
+      chatPanelRef.current.expand();
     } else {
-      chatPanelRef.current.collapse()
+      chatPanelRef.current.collapse();
     }
-  }, [showChat])
+  }, [showChat]);
 
   const handleSimulate = (
     updatedNetlist: string,
     updatedSvg?: string,
-    simulationResponse?: SimulationResponse,
+    simulationResponse?: SimulationResponse
   ) => {
-    setNetlist(updatedNetlist)
+    setNetlist(updatedNetlist);
     if (simulationResponse) {
-      setSimulation(simulationResponse)
+      setSimulation(simulationResponse);
     }
 
     if (circuitData) {
@@ -113,23 +109,20 @@ function DashboardContent() {
         ...circuitData,
         netlist: updatedNetlist,
         svgContent: updatedSvg ?? circuitData.svgContent,
-      })
+      });
     }
-  }
+  };
 
   return (
-    <div className="flex h-screen w-screen flex-col bg-background">
-      <Header 
+    <div className="bg-background flex h-screen w-screen flex-col">
+      <Header
         showCode={showCode}
         showChat={showChat}
         onToggleCode={toggleCode}
         onToggleChat={toggleChat}
       />
-      
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="flex-1"
-      >
+
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel
           id="code-panel"
           order={1}
@@ -141,12 +134,21 @@ function DashboardContent() {
           ref={codePanelRef}
           key={`code-${circuitId}`}
         >
-          <CodePanel key={`netlist-${circuitId}`} onSimulate={handleSimulate} initialNetlist={netlist} circuitId={circuitId} />
+          <CodePanel
+            key={`netlist-${circuitId}`}
+            onSimulate={handleSimulate}
+            initialNetlist={netlist}
+            circuitId={circuitId}
+          />
         </ResizablePanel>
 
         <ResizableHandle
           withHandle
-          className={showCode ? "bg-border hover:bg-primary/50 transition-colors" : "bg-border opacity-0 pointer-events-none"}
+          className={
+            showCode
+              ? 'bg-border hover:bg-primary/50 transition-colors'
+              : 'bg-border pointer-events-none opacity-0'
+          }
         />
 
         <ResizablePanel
@@ -166,7 +168,11 @@ function DashboardContent() {
 
         <ResizableHandle
           withHandle
-          className={showChat ? "bg-border hover:bg-primary/50 transition-colors" : "bg-border opacity-0 pointer-events-none"}
+          className={
+            showChat
+              ? 'bg-border hover:bg-primary/50 transition-colors'
+              : 'bg-border pointer-events-none opacity-0'
+          }
         />
 
         <ResizablePanel
@@ -183,19 +189,19 @@ function DashboardContent() {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
-  )
+  );
 }
 
 export default function SpacyAIPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen w-screen items-center justify-center bg-background text-sm text-muted-foreground">
+        <div className="bg-background text-muted-foreground flex h-screen w-screen items-center justify-center text-sm">
           Loading dashboard...
         </div>
       }
     >
       <DashboardContent />
     </Suspense>
-  )
+  );
 }

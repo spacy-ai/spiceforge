@@ -1,11 +1,18 @@
-'use client'
+'use client';
 
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 interface ElectronicSymbol {
-  id: string
-  type: 'resistor' | 'capacitor' | 'transistor' | 'diode' | 'inductor' | 'ic-chip' | 'circuit-board'
-  svg: ReactNode
+  id: string;
+  type:
+    | 'resistor'
+    | 'capacitor'
+    | 'transistor'
+    | 'diode'
+    | 'inductor'
+    | 'ic-chip'
+    | 'circuit-board';
+  svg: ReactNode;
 }
 
 const ELECTRONICS_SYMBOLS = [
@@ -91,17 +98,34 @@ const ELECTRONICS_SYMBOLS = [
       </svg>
     ),
   },
-]
+];
 
-const POSITIONS = ['5%', '10%', '15%', '20%', '25%', '30%', '40%', '45%', '50%', '55%', '60%', '70%', '75%', '80%', '85%', '90%']
+const POSITIONS = [
+  '5%',
+  '10%',
+  '15%',
+  '20%',
+  '25%',
+  '30%',
+  '40%',
+  '45%',
+  '50%',
+  '55%',
+  '60%',
+  '70%',
+  '75%',
+  '80%',
+  '85%',
+  '90%',
+];
 
 function getStablePosition(index: number) {
-  const positionIndex = (index * 7) % POSITIONS.length
-  const useLeft = index % 2 === 0
+  const positionIndex = (index * 7) % POSITIONS.length;
+  const useLeft = index % 2 === 0;
 
   return {
     [useLeft ? 'left' : 'right']: POSITIONS[positionIndex],
-  }
+  };
 }
 
 export function AnimatedElectronics() {
@@ -110,7 +134,7 @@ export function AnimatedElectronics() {
     symbol: ELECTRONICS_SYMBOLS[i % ELECTRONICS_SYMBOLS.length],
     delay: (i * 0.25) % 8,
     position: getStablePosition(i),
-  }))
+  }));
 
   return (
     <>
@@ -139,7 +163,7 @@ export function AnimatedElectronics() {
         }
       `}</style>
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {elements.map((el) => (
           <div
             key={el.id}
@@ -155,5 +179,5 @@ export function AnimatedElectronics() {
         ))}
       </div>
     </>
-  )
+  );
 }

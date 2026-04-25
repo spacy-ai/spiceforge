@@ -1,58 +1,60 @@
-'use client'
+'use client';
 
-import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft } from 'lucide-react'
-import { useTheme } from 'next-themes'
-import { useRouter } from 'next/navigation'
-
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
-  const { theme, setTheme } = useTheme()
-  const previousTheme = useRef<string | undefined>(undefined)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const router = useRouter()
+  const { theme, setTheme } = useTheme();
+  const previousTheme = useRef<string | undefined>(undefined);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
-    previousTheme.current = theme
-    setTheme('light')
+    previousTheme.current = theme;
+    setTheme('light');
 
     return () => {
       if (previousTheme.current) {
-        setTheme(previousTheme.current)
+        setTheme(previousTheme.current);
       } else {
-        setTheme('system')
+        setTheme('system');
       }
-    }
-  }, [setTheme, theme])
+    };
+  }, [setTheme, theme]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     try {
       const res = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.message || 'Login failed')
+        const data = await res.json();
+        throw new Error(data.message || 'Login failed');
       }
-      router.push('/circuit?circuitid=3')
+      router.push('/circuit?circuitid=3');
     } catch (err: any) {
-      alert(err.message)
+      alert(err.message);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-6 relative">
+    <div className="bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center px-6">
       {/* Back Button */}
-      <Link href="/dashboard" className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-        <ChevronLeft className="w-5 h-5" />
+      <Link
+        href="/dashboard"
+        className="text-muted-foreground hover:text-foreground absolute top-6 left-6 flex items-center gap-2 transition-colors"
+      >
+        <ChevronLeft className="h-5 w-5" />
         <span className="text-sm">Back</span>
       </Link>
 
@@ -63,7 +65,7 @@ export default function SignIn() {
 
       {/* Sign In Form */}
       <div className="w-full max-w-md">
-        <div className="border border-border rounded-lg p-8 bg-card">
+        <div className="border-border bg-card rounded-lg border p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Input */}
             <div className="space-y-2">
@@ -76,7 +78,7 @@ export default function SignIn() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none"
                 required
               />
             </div>
@@ -92,14 +94,17 @@ export default function SignIn() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none"
                 required
               />
             </div>
 
             {/* Forgot Password Link */}
             <div className="flex justify-end">
-              <button type="button" className="text-sm text-orange-600 hover:text-orange-700 transition-colors">
+              <button
+                type="button"
+                className="text-sm text-orange-600 transition-colors hover:text-orange-700"
+              >
                 Forgot password?
               </button>
             </div>
@@ -107,17 +112,20 @@ export default function SignIn() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors"
+              className="w-full rounded-lg bg-orange-600 py-2 font-semibold text-white transition-colors hover:bg-orange-700"
             >
               Sign In
             </Button>
           </form>
 
           {/* Sign Up Link */}
-          <div className="mt-6 text-center border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="border-border mt-6 border-t pt-6 text-center">
+            <p className="text-muted-foreground text-sm">
               Don&apos;t have an account?{' '}
-              <Link href="/auth/signup" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">
+              <Link
+                href="/auth/signup"
+                className="font-medium text-orange-600 transition-colors hover:text-orange-700"
+              >
                 Sign up
               </Link>
             </p>
@@ -125,5 +133,5 @@ export default function SignIn() {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,29 +1,29 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft } from 'lucide-react'
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
 
 export default function SignUp() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      setLoading(false)
-      return
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
     }
 
     try {
@@ -32,32 +32,34 @@ export default function SignUp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: name,
-          full_name: name, 
+          full_name: name,
           email,
           password,
         }),
-      })
+      });
 
-      const data = await res.json()
+      const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Signup failed')
+        throw new Error(data.message || 'Signup failed');
       }
 
-      router.push('/circuit?circuitid=3') 
+      router.push('/circuit?circuitid=3');
     } catch (err: any) {
-      setError(err.message || 'Something went wrong')
+      setError(err.message || 'Something went wrong');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
 
   return (
-    <div className="light-surface min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-6 relative">
+    <div className="light-surface bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center px-6">
       {/* Back Button */}
-      <Link href="/dashboard" className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-        <ChevronLeft className="w-5 h-5" />
+      <Link
+        href="/dashboard"
+        className="text-muted-foreground hover:text-foreground absolute top-6 left-6 flex items-center gap-2 transition-colors"
+      >
+        <ChevronLeft className="h-5 w-5" />
         <span className="text-sm">Back</span>
       </Link>
 
@@ -69,9 +71,9 @@ export default function SignUp() {
 
       {/* Sign Up Form */}
       <div className="w-full max-w-md">
-        <div className="border border-border rounded-lg p-8 bg-card">
+        <div className="border-border bg-card rounded-lg border p-8">
           {error && (
-            <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -88,7 +90,7 @@ export default function SignUp() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -105,7 +107,7 @@ export default function SignUp() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -122,7 +124,7 @@ export default function SignUp() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -139,7 +141,7 @@ export default function SignUp() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -148,17 +150,20 @@ export default function SignUp() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-orange-600 py-2 font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
           {/* Sign In Link */}
-          <div className="mt-6 text-center border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="border-border mt-6 border-t pt-6 text-center">
+            <p className="text-muted-foreground text-sm">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">
+              <Link
+                href="/auth/signin"
+                className="font-medium text-orange-600 transition-colors hover:text-orange-700"
+              >
                 Sign in
               </Link>
             </p>
@@ -166,5 +171,5 @@ export default function SignUp() {
         </div>
       </div>
     </div>
-  )
+  );
 }
