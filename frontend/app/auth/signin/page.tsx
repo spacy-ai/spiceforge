@@ -5,12 +5,15 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import { useRouter } from 'next/navigation'
+
 
 export default function SignIn() {
   const { theme, setTheme } = useTheme()
   const previousTheme = useRef<string | undefined>(undefined)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     previousTheme.current = theme
@@ -25,9 +28,24 @@ export default function SignIn() {
     }
   }, [setTheme, theme])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Sign in:', { email, password })
+
+    try {
+      const res = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message || 'Login failed')
+      }
+      router.push('/circuit?circuitid=3')
+    } catch (err: any) {
+      alert(err.message)
+    }
   }
 
   return (

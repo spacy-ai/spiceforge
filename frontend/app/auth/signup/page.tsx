@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
 
@@ -10,11 +11,47 @@ export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Sign up:', { name, email, password, confirmPassword })
+    setLoading(true)
+    setError('')
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: name,
+          full_name: name, 
+          email,
+          password,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Signup failed')
+      }
+
+      router.push('/circuit?circuitid=3') 
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
+
 
   return (
     <div className="light-surface min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-6 relative">
@@ -33,6 +70,11 @@ export default function SignUp() {
       {/* Sign Up Form */}
       <div className="w-full max-w-md">
         <div className="border border-border rounded-lg p-8 bg-card">
+          {error && (
+            <div className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name Input */}
             <div className="space-y-2">
@@ -45,7 +87,8 @@ export default function SignUp() {
                 placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -61,7 +104,8 @@ export default function SignUp() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -77,7 +121,8 @@ export default function SignUp() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -93,7 +138,8 @@ export default function SignUp() {
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 required
               />
             </div>
@@ -101,9 +147,10 @@ export default function SignUp() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors"
+              disabled={loading}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
