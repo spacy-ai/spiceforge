@@ -118,6 +118,14 @@ STRICT OUTPUT RULES:
 - All node names must be consistent strings that comply with SPICE/LTspice conventions.
 - Ground must always be node "0".
 
+ADDITIONAL FIELD:
+- "summary": A short, human-readable explanation of the circuit.
+  - Must describe what the circuit does in plain English
+  - Must mention the components and their purpose
+  - Keep it concise (2-4 sentences)
+  - Do NOT include SPICE syntax, node names, or JSON terminology
+  - Must always be present in every response
+
 REQUIRED PARAMETERS BY COMPONENT TYPE:
 - resistor: {"resistance": <ohms>}
 - capacitor: {"capacitance": <farads>}
@@ -203,7 +211,8 @@ JSON SCHEMA:
   ],
   "constraints": {},
   "topology_notes": "<brief explanation of topology choices>",
-  "design_decisions": ["<decision 1>", "<decision 2>"]
+  "design_decisions": ["<decision 1>", "<decision 2>"],
+  "summary": "<concise human-readable explanation of the circuit>"
 }"""
 
     @staticmethod
