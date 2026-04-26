@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export default function SignIn() {
   const { theme, setTheme } = useTheme();
   const previousTheme = useRef<string | undefined>(undefined);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export default function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     try {
       const res = await fetch('/api/auth/signin', {
@@ -41,9 +44,17 @@ export default function SignIn() {
         const data = await res.json();
         throw new Error(data.message || 'Login failed');
       }
-      router.push('/circuit?circuitid=3');
+
+      toast.success('Signed in successfully', {
+        position: 'top-right',
+      });
+      router.push('/circuit');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Sign in failed', {
+        position: 'top-right',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -112,9 +123,10 @@ export default function SignIn() {
             {/* Submit Button */}
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="w-full rounded-lg bg-orange-600 py-2 font-semibold text-white transition-colors hover:bg-orange-700"
             >
-              Sign In
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
 

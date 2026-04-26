@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ identifier: email, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!backendRes.ok) {

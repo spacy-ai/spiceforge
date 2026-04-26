@@ -6,10 +6,10 @@ import { Sparkles, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { AnimatedElectronics } from '@/components/animated-electronics';
+import { UserMenu } from '@/components/custom/user-menu';
 
 export default function Home() {
   const { theme, setTheme } = useTheme();
-
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
@@ -41,12 +41,7 @@ export default function Home() {
             <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
             <span className="sr-only">Toggle theme</span>
           </Button>
-          <Link
-            href="/auth/signin"
-            className="rounded-full border border-orange-600 px-4 py-2 text-sm text-orange-600 transition-colors hover:bg-orange-600 hover:text-white"
-          >
-            Sign In
-          </Link>
+          <UserMenu />
         </div>
       </header>
 
@@ -78,7 +73,7 @@ export default function Home() {
             >
               Preview Simulator
             </Button>
-            <Link href="/circuit?circuitid=3">
+            <Link href="/circuit">
               <Button
                 size="lg"
                 variant="outline"

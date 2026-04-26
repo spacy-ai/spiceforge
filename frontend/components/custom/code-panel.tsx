@@ -6,6 +6,7 @@ import { Copy, Terminal, Play, CheckCircle, AlertCircle } from 'lucide-react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { useState, useEffect, useRef } from 'react';
 import { apiBase } from '@/lib/config';
+import type { SimulationResponse } from '@/lib/types/simulation';
 
 interface ConsoleMessage {
   id: string;
@@ -19,7 +20,11 @@ export function CodePanel({
   initialNetlist = '',
   circuitId,
 }: {
-  onSimulate?: (netlist: string, svgContent?: string) => void;
+  onSimulate?: (
+    netlist: string,
+    svgContent?: string,
+    simulationResponse?: SimulationResponse
+  ) => void;
   initialNetlist?: string;
   circuitId?: string;
 }) {
@@ -100,13 +105,21 @@ export function CodePanel({
 
       if (data.status === 'error') {
         const errMessage = data?.error?.message || 'Simulation failed';
-        addMessage('error', `✗ ${errMessage}`);
+        const hint = data?.error?.hint ? ` Hint: ${data.error.hint}` : '';
+        addMessage('error', `✗ ${errMessage}${hint}`);
+
+        if (data?.stderr) {
+          addMessage('warning', `stderr: ${data.stderr}`);
+        }
+        if (data?.stdout) {
+          addMessage('info', `stdout: ${data.stdout}`);
+        }
       } else {
         addMessage('success', `✓ Simulation of ${circuitId} completed successfully`);
         addMessage('info', 'Simulation results received from backend');
 
         if (onSimulate) {
-          onSimulate(netlist, data?.schematic?.content);
+          onSimulate(netlist, data?.schematic?.content, data as SimulationResponse);
         }
       }
     } catch (error) {

@@ -3,14 +3,14 @@ import { apiBase } from '@/lib/config';
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, full_name, email, password } = await req.json();
+    const { full_name, email, password } = await req.json();
 
     const backendRes = await fetch(`${apiBase}/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, full_name, email, password }),
+      body: JSON.stringify({ full_name, email, password }),
     });
 
     const data = await backendRes.json();

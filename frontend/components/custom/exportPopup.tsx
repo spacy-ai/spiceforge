@@ -126,11 +126,6 @@ export function ExportPopup({ circuitId }: exportPopupProps) {
           </Button>
         </div>
         <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-3">
-          <DialogClose asChild>
-            <Button variant="ghost" className="w-full sm:w-auto">
-              Cancel
-            </Button>
-          </DialogClose>
           <Button className="w-full sm:w-auto" onClick={handleExport}>
             Start export
           </Button>

@@ -2,18 +2,27 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Plus, Sun, Moon } from 'lucide-react';
+import { Sparkles, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
+import { UserMenu } from '@/components/custom/user-menu';
+import { ProjectDrawer } from '@/components/custom/project-drawer';
 
 interface HeaderProps {
   showCode: boolean;
   showChat: boolean;
   onToggleCode: () => void;
   onToggleChat: () => void;
+  currentCircuitId?: string;
 }
 
-export function Header({ showCode, showChat, onToggleCode, onToggleChat }: HeaderProps) {
+export function Header({
+  showCode,
+  showChat,
+  onToggleCode,
+  onToggleChat,
+  currentCircuitId,
+}: HeaderProps) {
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
@@ -35,9 +44,7 @@ export function Header({ showCode, showChat, onToggleCode, onToggleChat }: Heade
       </Link>
 
       <nav className="flex flex-1 items-center justify-center gap-2 sm:flex-none sm:justify-start">
-        <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-          Projects
-        </Button>
+        
         <Button
           onClick={onToggleCode}
           className={
@@ -72,10 +79,8 @@ export function Header({ showCode, showChat, onToggleCode, onToggleChat }: Heade
           <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
           <span className="sr-only">Toggle theme</span>
         </Button>
-        <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-          <Plus className="h-4 w-4" />
-          <span className="hidden lg:inline">New Project</span>
-        </Button>
+        <ProjectDrawer currentCircuitId={currentCircuitId} />
+        <UserMenu />
       </div>
     </header>
   );

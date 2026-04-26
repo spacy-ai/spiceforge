@@ -9,6 +9,7 @@ from app.models.user import User
 from app.core.database import SessionLocal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_optional_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 
 def get_db():
@@ -19,12 +20,16 @@ def get_db():
         db.close()
 
 
-def get_user(db: Session, username: str) -> User | None:
-    return db.query(User).filter(User.username == username).first()
+def get_user_by_email(db: Session, email: str) -> User | None:
+    return db.query(User).filter(User.email == email).first()
 
 
-def authenticate_user(db: Session, username: str, password: str) -> User | None:
-    user = get_user(db, username)
+def get_user_by_public_id(db: Session, public_id: str) -> User | None:
+    return db.query(User).filter(User.public_id == public_id).first()
+
+
+def authenticate_user(db: Session, email: str, password: str) -> User | None:
+    user = get_user_by_email(db, email)
     if not user:
         return None
     if not verify_password(password, user.password):
@@ -45,16 +50,34 @@ def get_current_user(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str | None = payload.get("sub")
-        if username is None:
+        public_id: str | None = payload.get("sub")
+        if public_id is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(public_id=public_id)
 
     except JWTError:
         raise credentials_exception
 
-    user = get_user(db, username=token_data.username)
+    user = get_user_by_public_id(db, public_id=token_data.public_id)
 
     if user is None:
         raise credentials_exception
     return user
+
+
+def get_optional_current_user(
+    db: Session = Depends(get_db),
+    token: str | None = Depends(oauth2_optional_scheme),
+) -> User | None:
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        public_id: str | None = payload.get("sub")
+        if public_id is None:
+            return None
+    except JWTError:
+        return None
+
+    return get_user_by_public_id(db, public_id=public_id)

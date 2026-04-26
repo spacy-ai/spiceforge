@@ -5,23 +5,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SignUp() {
-  const [name, setName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      toast.error('Passwords do not match', {
+        position: 'top-right',
+      });
       setLoading(false);
       return;
     }
@@ -31,8 +32,7 @@ export default function SignUp() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: name,
-          full_name: name,
+          full_name: fullName,
           email,
           password,
         }),
@@ -44,9 +44,15 @@ export default function SignUp() {
         throw new Error(data.message || 'Signup failed');
       }
 
-      router.push('/circuit?circuitid=3');
+      toast.success('Account created successfully', {
+        position: 'top-right',
+      });
+
+      router.push('/circuit');
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      toast.error(err.message || 'Something went wrong', {
+        position: 'top-right',
+      });
     } finally {
       setLoading(false);
     }
@@ -72,11 +78,6 @@ export default function SignUp() {
       {/* Sign Up Form */}
       <div className="w-full max-w-md">
         <div className="border-border bg-card rounded-lg border p-8">
-          {error && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name Input */}
             <div className="space-y-2">
@@ -87,8 +88,8 @@ export default function SignUp() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
                 disabled={loading}
                 className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required

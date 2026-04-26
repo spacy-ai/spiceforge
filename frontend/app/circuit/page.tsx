@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/custom/header';
 import { CodePanel } from '@/components/custom/code-panel';
 import { PreviewPanel } from '@/components/custom/preview-panel';
@@ -10,6 +10,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { apiBase } from '@/lib/config';
 import type { SimulationResponse } from '@/lib/types/simulation';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
+import { toast } from 'sonner';
 
 interface CircuitData {
   id: number;
@@ -22,23 +23,31 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const [showCode, setShowCode] = useState(true);
   const [showChat, setShowChat] = useState(true);
-  const [circuitId, setCircuitId] = useState<string>('1');
+  const [circuitId, setCircuitId] = useState<string | null>(null);
   const [circuitData, setCircuitData] = useState<CircuitData | null>(null);
   const [loading, setLoading] = useState(false);
   const [netlist, setNetlist] = useState('');
   const [simulation, setSimulation] = useState<SimulationResponse | null>(null);
+  const router = useRouter();
   const codePanelRef = useRef<ImperativePanelHandle>(null);
   const chatPanelRef = useRef<ImperativePanelHandle>(null);
 
   useEffect(() => {
     if (!searchParams) return;
 
-    const id = searchParams.get('circuitid') || '1';
+    const resolveCircuit = async () => {
+      const idParam = searchParams.get('circuitid');
+      if (!idParam) {
+        setCircuitId(null);
+        setCircuitData(null);
+        setNetlist('.title New Circuit\n\n.control\nop\n.endc\n.end');
+        return;
+      }
 
-    setCircuitId(id);
-    setLoading(true);
+      const id = idParam;
+      setCircuitId(id);
+      setLoading(true);
 
-    const fetchCircuit = async () => {
       try {
         const [circuitResponse, svgResponse] = await Promise.all([
           fetch(`${apiBase}/circuits/${id}`),
@@ -70,8 +79,8 @@ function DashboardContent() {
       }
     };
 
-    fetchCircuit();
-  }, [searchParams, apiBase]);
+    resolveCircuit();
+  }, [searchParams, apiBase, router]);
 
   const toggleCode = () => setShowCode((prev) => !prev);
   const toggleChat = () => setShowChat((prev) => !prev);
@@ -94,6 +103,48 @@ function DashboardContent() {
     }
   }, [showChat]);
 
+  const saveCircuit = async (updatedNetlist: string) => {
+    try {
+      if (!circuitId) {
+        const createRes = await fetch('/api/circuits', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: 'Untitled Project',
+            netlist: updatedNetlist,
+          }),
+        });
+
+        if (!createRes.ok) {
+          console.error('Failed to create circuit', createRes.status);
+          return;
+        }
+
+        const created = (await createRes.json()) as { id: number };
+        setCircuitId(String(created.id));
+        router.replace(`/circuit?circuitid=${created.id}`);
+        toast.success('New project created', { position: 'top-right' });
+        return;
+      }
+
+      const res = await fetch(`/api/circuits/${circuitId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ netlist: updatedNetlist }),
+      });
+
+      if (!res.ok) {
+        console.error('Failed to save circuit', res.status);
+      }
+    } catch (error) {
+      console.error('Failed to save circuit', error);
+    }
+  };
+
   const handleSimulate = (
     updatedNetlist: string,
     updatedSvg?: string,
@@ -111,6 +162,8 @@ function DashboardContent() {
         svgContent: updatedSvg ?? circuitData.svgContent,
       });
     }
+
+    void saveCircuit(updatedNetlist);
   };
 
   return (
@@ -120,6 +173,7 @@ function DashboardContent() {
         showChat={showChat}
         onToggleCode={toggleCode}
         onToggleChat={toggleChat}
+        currentCircuitId={circuitId}
       />
 
       <ResizablePanelGroup direction="horizontal" className="flex-1">
