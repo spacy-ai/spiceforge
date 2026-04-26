@@ -21,8 +21,9 @@ class ComponentSpec:
 class CircuitBlueprint:
     circuit_id: str
     description: str
-    input_nodes: list[str]
-    output_nodes: list[str]
+    title: str = ""
+    input_nodes: list[str] = field(default_factory=list)
+    output_nodes: list[str] = field(default_factory=list)
     ground_node: str = "0"
     components: list[ComponentSpec] = field(default_factory=list)
     analyses: list[dict] = field(default_factory=list)
@@ -119,6 +120,14 @@ STRICT OUTPUT RULES:
 - All node names must be consistent strings that comply with SPICE/LTspice conventions.
 - Ground must always be node "0".
 
+TITLE FIELD:
+- "title": A short, clean name for the circuit
+- Must be 3–8 words
+- No extra whitespace
+- No punctuation clutter
+- Derived from user description
+- Example: "RC Low Pass Filter"
+
 ADDITIONAL FIELD:
 - "summary": A short, human-readable explanation of the circuit.
   - Must describe what the circuit does in plain English
@@ -191,6 +200,7 @@ For each analysis type, include ALL required parameters:
 JSON SCHEMA:
 {
   "circuit_id": "<short_snake_case_id>",
+  "title": "<short clean circuit title>",
   "description": "<original description verbatim>",
   "input_nodes": ["Vin"],
   "output_nodes": ["Vout"],
@@ -261,6 +271,7 @@ JSON SCHEMA:
         return CircuitBlueprint(
             circuit_id=blueprint.circuit_id,
             description=blueprint.description,
+            title=blueprint.title,
             input_nodes=list(blueprint.input_nodes),
             output_nodes=list(blueprint.output_nodes),
             ground_node=blueprint.ground_node,
@@ -306,6 +317,7 @@ JSON SCHEMA:
         blueprint = CircuitBlueprint(
             circuit_id=data.get("circuit_id", "unnamed"),
             description=data.get("description", ""),
+            title=data.get("title", ""),
             input_nodes=data.get("input_nodes", []),
             output_nodes=data.get("output_nodes", []),
             ground_node=data.get("ground_node", "0"),
