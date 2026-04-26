@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   ChartContainer,
@@ -6,27 +6,20 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ReferenceLine,
-} from "recharts"
+} from '@/components/ui/chart';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
 
 export type TransientPoint = {
-  time: number
-  vin: number
-  vout: number
-}
+  time: number;
+  vin: number;
+  vout: number;
+};
 
 type TransientWaveformPlotProps = {
-  data: TransientPoint[]
-  markers?: Array<{ time: number; color?: string }>
-  className?: string
-}
+  data: TransientPoint[];
+  markers?: Array<{ time: number; color?: string }>;
+  className?: string;
+};
 
 export function TransientWaveformPlot({
   data,
@@ -36,10 +29,10 @@ export function TransientWaveformPlot({
   return (
     <ChartContainer
       config={{
-        vout: { label: "Vout", color: "#f97316" },
-        vin: { label: "Vin", color: "#0ea5e9" },
+        vout: { label: 'Vout', color: '#f97316' },
+        vin: { label: 'Vin', color: '#0ea5e9' },
       }}
-      className={className ?? "h-[280px]"}
+      className={className ?? 'h-[280px]'}
     >
       <LineChart data={data} margin={{ left: 12, right: 12 }}>
         <CartesianGrid strokeDasharray="4 4" />
@@ -51,13 +44,19 @@ export function TransientWaveformPlot({
           <ReferenceLine
             key={`${marker.time}-${index}`}
             x={marker.time}
-            stroke={marker.color ?? "#f97316"}
+            stroke={marker.color ?? '#f97316'}
             strokeDasharray="4 4"
           />
         ))}
-        <Line type="monotone" dataKey="vout" stroke="var(--color-vout)" strokeWidth={2} dot={false} />
+        <Line
+          type="monotone"
+          dataKey="vout"
+          stroke="var(--color-vout)"
+          strokeWidth={2}
+          dot={false}
+        />
         <Line type="monotone" dataKey="vin" stroke="var(--color-vin)" strokeWidth={2} dot={false} />
       </LineChart>
     </ChartContainer>
-  )
+  );
 }

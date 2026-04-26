@@ -159,3 +159,12 @@
   --sidebar-border: #cdc5a8;
   --sidebar-ring: #ff6600;
 }
+
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}

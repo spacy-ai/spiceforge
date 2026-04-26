@@ -1,23 +1,17 @@
-from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
 
 
 class RegisterRequest(BaseModel):
-    username: str
-    full_name: Optional[str] = None
+    full_name: str
     email: EmailStr
     password: str
 
-    @field_validator("username")
+    @field_validator("full_name")
     @classmethod
-    def validate_username(cls, v):
+    def validate_full_name(cls, v):
         if not v.strip():
-            raise ValueError("Username cannot be empty")
-        if " " in v:
-            raise ValueError("Username cannot contain spaces")
-        if len(v) < 3 or len(v) > 15:
-            raise ValueError("Username must be between 3 and 15 characters")
+            raise ValueError("Full name cannot be empty")
         return v
 
     @field_validator("password")
@@ -29,13 +23,13 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    identifier: str  
+    email: EmailStr
     password: str
 
 class UserResponse(BaseModel):
     id: int
-    username: str
-    full_name: Optional[str]
+    public_id: str
+    full_name: str
     email: EmailStr
     created_at: datetime
 
@@ -45,4 +39,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: str | None = None
+    public_id: str | None = None

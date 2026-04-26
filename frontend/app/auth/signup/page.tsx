@@ -1,26 +1,71 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft } from 'lucide-react'
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SignUp() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log('Sign up:', { name, email, password, confirmPassword })
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match', {
+        position: 'top-right',
+      });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: fullName,
+          email,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      toast.success('Account created successfully', {
+        position: 'top-right',
+      });
+
+      router.push('/circuit');
+    } catch (err: any) {
+      toast.error(err.message || 'Something went wrong', {
+        position: 'top-right',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="light-surface min-h-screen bg-background text-foreground flex flex-col items-center justify-center px-6 relative">
+    <div className="light-surface bg-background text-foreground relative flex min-h-screen flex-col items-center justify-center px-6">
       {/* Back Button */}
-      <Link href="/dashboard" className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-        <ChevronLeft className="w-5 h-5" />
+      <Link
+        href="/dashboard"
+        className="text-muted-foreground hover:text-foreground absolute top-6 left-6 flex items-center gap-2 transition-colors"
+      >
+        <ChevronLeft className="h-5 w-5" />
         <span className="text-sm">Back</span>
       </Link>
 
@@ -32,7 +77,7 @@ export default function SignUp() {
 
       {/* Sign Up Form */}
       <div className="w-full max-w-md">
-        <div className="border border-border rounded-lg p-8 bg-card">
+        <div className="border-border bg-card rounded-lg border p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Full Name Input */}
             <div className="space-y-2">
@@ -43,9 +88,10 @@ export default function SignUp() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -61,7 +107,8 @@ export default function SignUp() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -77,7 +124,8 @@ export default function SignUp() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -93,7 +141,8 @@ export default function SignUp() {
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-orange-600 focus:border-transparent transition-colors"
+                disabled={loading}
+                className="border-border bg-background w-full rounded-lg border px-4 py-2 transition-colors focus:border-transparent focus:ring-2 focus:ring-orange-600 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 required
               />
             </div>
@@ -101,17 +150,21 @@ export default function SignUp() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors"
+              disabled={loading}
+              className="w-full rounded-lg bg-orange-600 py-2 font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Account
+              {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
           {/* Sign In Link */}
-          <div className="mt-6 text-center border-t border-border pt-6">
-            <p className="text-sm text-muted-foreground">
+          <div className="border-border mt-6 border-t pt-6 text-center">
+            <p className="text-muted-foreground text-sm">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="text-orange-600 hover:text-orange-700 font-medium transition-colors">
+              <Link
+                href="/auth/signin"
+                className="font-medium text-orange-600 transition-colors hover:text-orange-700"
+              >
                 Sign in
               </Link>
             </p>
@@ -119,5 +172,5 @@ export default function SignUp() {
         </div>
       </div>
     </div>
-  )
+  );
 }
