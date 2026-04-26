@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiBase } from '@/lib/config';
 
-export async function PATCH(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const token = req.cookies.get('token')?.value;
 
   if (!token) {

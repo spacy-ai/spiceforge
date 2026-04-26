@@ -44,7 +44,6 @@ export function Header({
       </Link>
 
       <nav className="flex flex-1 items-center justify-center gap-2 sm:flex-none sm:justify-start">
-        
         <Button
           onClick={onToggleCode}
           className={

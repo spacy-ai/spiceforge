@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Eye } from 'lucide-react';
 
 type CircuitListItem = {
@@ -108,7 +108,7 @@ export function ProjectDrawer({ currentCircuitId }: { currentCircuitId?: string 
 
           <div className="px-4 pb-4">
             <div className="relative">
-              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -129,29 +129,29 @@ export function ProjectDrawer({ currentCircuitId }: { currentCircuitId?: string 
                 New Project
               </button>
 
-             {filteredCircuits.map((circuit) => (
+              {filteredCircuits.map((circuit) => (
                 <div
                   key={circuit.id}
-                  className="border-border bg-card hover:ring-1 hover:ring-orange-400/50 flex aspect-square flex-col justify-between rounded-lg border p-3 transition-colors "
+                  className="border-border bg-card flex aspect-square flex-col justify-between rounded-lg border p-3 transition-colors hover:ring-1 hover:ring-orange-400/50"
                 >
                   <div className="text-sm font-semibold">
                     {circuit.name?.trim() || `Circuit ${circuit.id}`}
                   </div>
 
                   <div className="flex items-center justify-between">
-                  <div className="text-muted-foreground text-xs">
-                    Updated {formatDate(circuit.updated_at || circuit.created_at)}
-                  </div>
-                  <Button
-                    size="icon"
-                    className="bg-primary text-primary-foreground hover:bg-primary/80 shrink-0 sm:h-7 sm:w-7"
-                    onClick={() => {
-                      setOpen(false);
-                      router.push(`/circuit?circuitid=${circuit.id}`);
-                    }}
-                  >
-                    <Eye className="h-2 w-2 sm:h-5 sm:w-5" />
-                  </Button>
+                    <div className="text-muted-foreground text-xs">
+                      Updated {formatDate(circuit.updated_at || circuit.created_at)}
+                    </div>
+                    <Button
+                      size="icon"
+                      className="bg-primary text-primary-foreground hover:bg-primary/80 shrink-0 sm:h-7 sm:w-7"
+                      onClick={() => {
+                        setOpen(false);
+                        router.push(`/circuit?circuitid=${circuit.id}`);
+                      }}
+                    >
+                      <Eye className="h-2 w-2 sm:h-5 sm:w-5" />
+                    </Button>
                   </div>
                 </div>
               ))}

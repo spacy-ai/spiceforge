@@ -97,7 +97,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="ring-offset-background focus-visible:ring-ring rounded-full outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-offset-2"
+          className="ring-offset-background focus-visible:ring-ring rounded-full transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
         >
           <Avatar className="border-border bg-background h-9 w-9 border">
             <AvatarFallback className="text-sm font-semibold">
@@ -108,7 +108,7 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuLabel className="space-y-1">
-          <div className="text-xs font-semibold text-foreground break-words whitespace-normal">
+          <div className="text-foreground text-xs font-semibold break-words whitespace-normal">
             {user.full_name}
           </div>
           <div className="text-muted-foreground text-[11px] break-words whitespace-normal">
