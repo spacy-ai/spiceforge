@@ -29,6 +29,7 @@ class CircuitBlueprint:
     constraints: dict = field(default_factory=dict)
     topology_notes: str = ""
     design_decisions: list[str] = field(default_factory=list)
+    summary: str = ""
 
 
 class OpenCodeClient:
@@ -268,6 +269,7 @@ JSON SCHEMA:
             constraints=dict(blueprint.constraints),
             topology_notes=blueprint.topology_notes,
             design_decisions=list(blueprint.design_decisions),
+            summary=blueprint.summary,
         )
 
     def __init__(
@@ -312,5 +314,6 @@ JSON SCHEMA:
             constraints=data.get("constraints", {}),
             topology_notes=data.get("topology_notes", ""),
             design_decisions=data.get("design_decisions", []),
+            summary=data.get("summary", ""),
         )
         return self._apply_safety_fixes(blueprint)
