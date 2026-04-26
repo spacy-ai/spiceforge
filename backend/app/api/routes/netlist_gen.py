@@ -21,6 +21,7 @@ class GenerateNetlistRequest(BaseModel):
 class GenerateNetlistResponse(BaseModel):
     success: bool
     netlist: str
+    summary: Optional[str] = None
     python_code: Optional[str] = None
     error: Optional[str] = None
 
@@ -87,6 +88,7 @@ def generate_netlist(request: GenerateNetlistRequest):
             return GenerateNetlistResponse(
                 success=False,
                 netlist="",
+                summary=None,
                 error=f"Validation failed: {'; '.join(error_messages)}",
             )
 
@@ -101,6 +103,7 @@ def generate_netlist(request: GenerateNetlistRequest):
         return GenerateNetlistResponse(
             success=True,
             netlist=result.netlist or "",
+            summary=getattr(blueprint, "summary", None),
             python_code=result.python_code,
             error=None,
         )
@@ -109,6 +112,7 @@ def generate_netlist(request: GenerateNetlistRequest):
         return GenerateNetlistResponse(
             success=False,
             netlist="",
+            summary=None,
             error=str(exc),
         )
 
@@ -137,6 +141,3 @@ def validate_blueprint(request: ValidateRequest):
             issues=[],
             error=str(exc),
         )
-
-
-
