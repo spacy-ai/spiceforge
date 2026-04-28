@@ -20,7 +20,9 @@ class GenerateNetlistRequest(BaseModel):
 
 class GenerateNetlistResponse(BaseModel):
     success: bool
+    title: Optional[str] = None
     netlist: str
+    summary: Optional[str] = None
     python_code: Optional[str] = None
     error: Optional[str] = None
 
@@ -60,6 +62,7 @@ def generate_netlist(request: GenerateNetlistRequest):
             {
                 "circuit_id": blueprint.circuit_id,
                 "description": blueprint.description,
+                "title": blueprint.title,
                 "input_nodes": blueprint.input_nodes,
                 "output_nodes": blueprint.output_nodes,
                 "ground_node": blueprint.ground_node,
@@ -87,7 +90,9 @@ def generate_netlist(request: GenerateNetlistRequest):
             return GenerateNetlistResponse(
                 success=False,
                 netlist="",
+                summary=None,
                 error=f"Validation failed: {'; '.join(error_messages)}",
+                title=None,
             )
 
         synthesizer = SpecialistSynthesizer(
@@ -98,9 +103,13 @@ def generate_netlist(request: GenerateNetlistRequest):
 
         result = synthesizer.synthesize(validation_result.validated_blueprint)
 
+        title = blueprint.title or blueprint.description[:50] if blueprint.description else None
+
         return GenerateNetlistResponse(
             success=True,
+            title=title,
             netlist=result.netlist or "",
+            summary=blueprint.summary or None,
             python_code=result.python_code,
             error=None,
         )
@@ -109,7 +118,9 @@ def generate_netlist(request: GenerateNetlistRequest):
         return GenerateNetlistResponse(
             success=False,
             netlist="",
+            summary=None,
             error=str(exc),
+            title=None,
         )
 
 
@@ -137,6 +148,3 @@ def validate_blueprint(request: ValidateRequest):
             issues=[],
             error=str(exc),
         )
-
-
-
