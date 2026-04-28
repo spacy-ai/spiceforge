@@ -243,7 +243,7 @@ class CircuitBuilder:
 
     def netlist(self) -> str:
         lines = []
-        lines.append(f"* {self._title.strip()}")
+        lines.append(f"* {(self._title or '').strip()}")
 
         for comment in self._comments:
             lines.append(comment)
