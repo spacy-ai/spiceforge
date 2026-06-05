@@ -43,8 +43,8 @@ class OpenCodeClient:
         api_base: Optional[str] = None,
         model: Optional[str] = None,
         temperature: float = 0.3,
-        max_tokens: int = 3000,
-        timeout: int = 54,
+        max_tokens: int = 100000,
+        timeout: int = 12000,
     ):
         self.api_key = api_key or os.environ.get("OPENCODE_API_KEY", "")
         if not self.api_key:
@@ -107,7 +107,18 @@ class OpenCodeClient:
         )
         resp.raise_for_status()
         data = resp.json()
-        content = data["choices"][0]["message"]["content"]
+        if "error" in data:
+            raise ValueError(f"OpenCode error: {data['error']}")
+
+        choice = (data.get("choices") or [{}])[0]
+        content = (
+            choice.get("message", {}).get("content")
+            or choice.get("text")
+            or ""
+        )
+
+        if not content:
+            raise ValueError(f"OpenCode returned empty content: {data}")
 
         if response_format == "json":
             content = self._strip_json_fences(content)

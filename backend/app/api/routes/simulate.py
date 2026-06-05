@@ -3,7 +3,6 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from app.services.ngspice import NgspiceFailure, run_ngspice
-from app.services.schematic import generate_schematic
 from app.schema.simulation import (
     ErrorDetail,
     SimulationRequest,
@@ -25,12 +24,6 @@ async def simulate(payload: SimulationRequest) -> SimulationResponse:
         save_schematic = bool(
             payload.options and payload.options.save_schematic_to_project_root
         )
-        if include_schematic or save_schematic:
-            schematic = generate_schematic(
-                payload.netlist,
-                save_to_project_root=save_schematic,
-                renderer="interactive",
-            )
     except NgspiceFailure as exc:
         detail = exc.detail
         return SimulationResponse(
