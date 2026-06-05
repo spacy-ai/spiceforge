@@ -15,9 +15,9 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-background text-foreground scroll-smooth">
+    <div className="bg-card text-foreground scroll-smooth">
       {/* Header */}
-      <header className="bg-background/80 border-border fixed top-0 right-0 left-0 z-50 flex items-center justify-between border-b px-6 py-4 backdrop-blur-sm">
+      <header className="bg-background/70 border-border fixed top-0 right-0 left-0 z-50 flex items-center justify-between border-b px-6 py-4 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
@@ -123,7 +123,7 @@ export default function Home() {
           {/* Features Grid */}
           <div className="mt-16 grid gap-6 md:grid-cols-3">
             <div className="border-border rounded-lg border p-6 transition-colors hover:border-orange-600">
-              <div className="mb-4 text-3xl">⚡</div>
+       
               <h3 className="mb-2 text-lg font-semibold">Fast Simulation</h3>
               <p className="text-muted-foreground text-sm">
                 First of all understand there is no other ai driven spice simluator. All are busy
@@ -132,7 +132,7 @@ export default function Home() {
             </div>
 
             <div className="border-border rounded-lg border p-6 transition-colors hover:border-orange-600">
-              <div className="mb-4 text-3xl">🤖</div>
+            
               <h3 className="mb-2 text-lg font-semibold">AI-Powered Design</h3>
               <p className="text-muted-foreground text-sm">
                 If you think using ai for circuit design will make you lazy, think again. You use ai
@@ -141,7 +141,7 @@ export default function Home() {
             </div>
 
             <div className="border-border rounded-lg border p-6 transition-colors hover:border-orange-600">
-              <div className="mb-4 text-3xl">📊</div>
+         
               <h3 className="mb-2 text-lg font-semibold">Rich Analytics</h3>
               <p className="text-muted-foreground text-sm">
                 {' '}

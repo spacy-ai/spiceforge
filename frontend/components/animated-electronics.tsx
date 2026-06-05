@@ -171,7 +171,7 @@ export function AnimatedElectronics() {
             style={{
               ...el.position,
               animationDelay: `${el.delay}s`,
-              top: '0',
+              top: '38%',
             }}
           >
             {el.symbol.svg}
