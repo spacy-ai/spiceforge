@@ -331,7 +331,7 @@ Ground node is "0" everywhere"""
             max_tokens=max_tokens,
         )
 
-    def create_plan(self, description: str) -> CircuitBlueprint:
+    def create_plan(self, description: str, apply_safety_fixes: bool = True) -> CircuitBlueprint:
         prompt = (
             f"Analyze the following circuit description and return a complete JSON blueprint.\n\n"
             f"DESCRIPTION:\n{description}\n\n"
@@ -360,4 +360,9 @@ Ground node is "0" everywhere"""
             design_decisions=data.get("design_decisions", []),
             summary=data.get("summary", ""),
         )
-        return self._apply_safety_fixes(blueprint)
+        if apply_safety_fixes:
+            return self._apply_safety_fixes(blueprint)
+        return blueprint
+
+    def create_plan_strict(self, description: str) -> CircuitBlueprint:
+        return self.create_plan(description, apply_safety_fixes=False)
