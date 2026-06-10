@@ -33,7 +33,7 @@ class NetlistElement:
 
 @dataclass
 class LayoutBlock:
-   
+
     kind:               str
     entry_net:          str
     exit_net:           str
@@ -62,7 +62,7 @@ _GROUND_NETS = {'0', 'gnd', 'agnd', 'dgnd', 'vss', 'ground'}
 _PIN_COUNT: Dict[str, int] = {
     'R': 2, 'C': 2, 'L': 2, 'D': 2, 'Z': 2, 'SW': 2, 'V': 2, 'I': 2,
     'Q': 3,
-    'M': 3,  
+    'M': 3,   # drain gate source  (body implicit)
     'OP': 3,
 }
 
@@ -529,10 +529,8 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
         )
         body.append("")
 
-    # ── Blocks ─────────────────────────────────────────────────────────────────
     for blk in circuit.blocks:
 
-        # ── Series ─────────────────────────────────────────────────────────────
         if blk.kind == 'series':
             if on_ground_rail:
                 body.append("# Raise to top rail")
@@ -544,7 +542,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
                 body.append(f"d.add({_draw(el, 'right')})")
             body.append("")
 
-        # ── Parallel ───────────────────────────────────────────────────────────
         elif blk.kind == 'parallel':
             n   = len(blk.elements)
             pfx = f"_p{par_idx}"
@@ -554,13 +551,10 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
                 f"# Parallel ({n} branches): "
                 f"{', '.join(e.refdes for e in blk.elements)}"
             )
-            # Save top-left anchor
             body.append(f"{pfx}_tl = d.here")
-            # Top rail spans all N columns
             body.append(f"d.add(elm.Line().right({n} * UNIT))")
             body.append("")
 
-            # Each branch drawn .down() from its column on the top rail
             for i, el in enumerate(blk.elements):
                 x_off = i * unit
                 body.append(f"# branch {i}: {el.refdes}")
@@ -568,7 +562,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
                     f"d.add({_draw(el, 'down')}"
                     f".at(({pfx}_tl[0] + {x_off}, {pfx}_tl[1])))"
                 )
-                # Merged-shunt branches need an explicit Ground() at their bottom
                 if i in blk.par_shunt_indices:
                     body.append(
                         f"d.add(elm.Ground()"
@@ -576,7 +569,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
                     )
                 body.append("")
 
-            # Bottom rail spans all N columns (including merged-shunt columns)
             body.append(
                 f"d.add(elm.Line().right({n} * UNIT)"
                 f".at(({pfx}_tl[0], {pfx}_tl[1] - UNIT)))"
@@ -586,7 +578,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
             body.append("")
             on_ground_rail = True
 
-        # ── Shunt ──────────────────────────────────────────────────────────────
         elif blk.kind == 'shunt':
             body.append(
                 f"# Shunt→GND: {', '.join(e.refdes for e in blk.elements)}"
@@ -598,7 +589,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
             body.append("d.here = _shunt_top")
             body.append("")
 
-        # ── BJT ────────────────────────────────────────────────────────────────
         elif blk.kind == 'bjt':
             el  = blk.elements[0]
             var = el.refdes.lower()
@@ -611,7 +601,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
             )
             body.append("")
 
-        # ── MOSFET ─────────────────────────────────────────────────────────────
         elif blk.kind == 'mosfet':
             el  = blk.elements[0]
             var = el.refdes.lower()
@@ -624,7 +613,6 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
             )
             body.append("")
 
-        # ── Op-amp ─────────────────────────────────────────────────────────────
         elif blk.kind == 'opamp':
             el  = blk.elements[0]
             var = el.refdes.lower()
@@ -638,6 +626,7 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
             )
             body.append("")
 
+    # ── Close loop ─────────────────────────────────────────────────────────────
     if first_src_var:
         body.append("# Close loop")
         if not on_ground_rail:
@@ -648,16 +637,32 @@ def emit_code(circuit: Circuit, unit: int = 3) -> str:
     return '\n'.join(hdr + ["    " + ln for ln in body])
 
 
+# ---------------------------------------------------------------------------
+# 6. PUBLIC API
+# ---------------------------------------------------------------------------
 
 def netlist_to_schemdraw(netlist_text: str, unit: int = 3) -> str:
- 
+    """
+    Convert an NGSpice-compatible netlist string to a schemdraw Python script.
+
+    Parameters
+    ----------
+    netlist_text : str   Full NGSpice netlist (title line optional)
+    unit         : int   schemdraw drawing unit length (default 3)
+
+    Returns
+    -------
+    str  Executable Python source that produces the schematic when run.
+    """
     elements = parse_netlist(netlist_text)
     circuit  = analyse_topology(elements)
     return emit_code(circuit, unit=unit)
 
 
 def render_schemdraw_svg(code: str, out_path: str) -> str:
-
+    """
+    Execute generated schemdraw code and return SVG content as string.
+    """
     import schemdraw
     import schemdraw.elements as elm
     from pathlib import Path
@@ -670,4 +675,11 @@ def render_schemdraw_svg(code: str, out_path: str) -> str:
         1,
     )
     exec(exec_code, {"schemdraw": schemdraw, "elm": elm}, {})
-    return str(out)
+    
+    # CHANGE THIS PART - Read and return SVG content, not file path
+    if out.exists():
+        with open(out, 'r', encoding='utf-8') as f:
+            svg_content = f.read()
+        return svg_content
+    else:
+        raise RuntimeError(f"Failed to generate SVG at {out_path}")
