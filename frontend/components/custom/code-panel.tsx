@@ -106,7 +106,7 @@ export function CodePanel({
       if (data.status === 'error') {
         const errMessage = data?.error?.message || 'Simulation failed';
         const hint = data?.error?.hint ? ` Hint: ${data.error.hint}` : '';
-        addMessage('error', `✗ ${errMessage}${hint}`);
+        addMessage('error', `${errMessage}${hint}`);
 
         if (data?.stderr) {
           addMessage('warning', `stderr: ${data.stderr}`);
@@ -115,7 +115,7 @@ export function CodePanel({
           addMessage('info', `stdout: ${data.stdout}`);
         }
       } else {
-        addMessage('success', `✓ Simulation of ${circuitId} completed successfully`);
+        addMessage('success', `Simulation of ${circuitId} completed successfully`);
         addMessage('info', 'Simulation results received from backend');
 
         if (onSimulate) {
@@ -123,7 +123,7 @@ export function CodePanel({
         }
       }
     } catch (error) {
-      addMessage('error', `✗ Simulation failed for ${circuitId}: Check netlist syntax`);
+      addMessage('error', `Simulation failed for ${circuitId}: Check netlist syntax`);
     } finally {
       setIsSimulating(false);
     }
@@ -204,7 +204,7 @@ export function CodePanel({
       <ResizableHandle className="bg-border" />
 
       <ResizablePanel defaultSize={40} minSize={20}>
-        <div className="bg-card flex h-full flex-col">
+        <div className="bg-card flex h-full flex-col ">
           <div className="border-border flex items-center justify-between border-b px-3 py-2">
             <div className="flex items-center gap-2">
               <Terminal className="text-card-foreground h-4 w-4" />
@@ -219,7 +219,8 @@ export function CodePanel({
               Clear
             </Button>
           </div>
-          <ScrollArea className="h-full w-full flex-1">
+          <div className="flex h-full min-h-0 flex-col">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="space-y-1 p-4 pr-6">
               {messages.map((msg) => (
                 <div
@@ -234,6 +235,7 @@ export function CodePanel({
               ))}
             </div>
           </ScrollArea>
+        </div>
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
