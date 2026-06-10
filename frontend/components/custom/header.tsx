@@ -13,7 +13,7 @@ interface HeaderProps {
   showChat: boolean;
   onToggleCode: () => void;
   onToggleChat: () => void;
-  currentCircuitId?: string;
+  currentCircuitId?: string | null;
 }
 
 export function Header({

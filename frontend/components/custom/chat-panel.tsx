@@ -23,12 +23,6 @@ import {
   Wand2,
 } from 'lucide-react';
 
-const examplePrompts = [
-  'Build a modular clamping system (80×40mm) for T-track work...',
-  'Create a geneva drive mechanism (80×80×20mm) for intermitt...',
-  'Create an assembly fixture (300×200mm) with toggle clamp m...',
-  'Build a compression fitting (Ø20×40mm) with olive and nut for...',
-];
 
 type Message = {
   id: number;
@@ -113,33 +107,6 @@ export function ChatPanel() {
             </div>
           </div>
 
-          {/* Examples */}
-          <Collapsible open={examplesOpen} onOpenChange={setExamplesOpen}>
-            <CollapsibleTrigger asChild>
-              <button className="border-border bg-secondary/50 hover:bg-secondary flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors">
-                <div className="flex items-center gap-2">
-                  <Settings className="text-primary h-4 w-4" />
-                  <span className="text-primary font-medium">Examples</span>
-                </div>
-                {examplesOpen ? (
-                  <ChevronUp className="text-muted-foreground h-4 w-4" />
-                ) : (
-                  <ChevronDown className="text-muted-foreground h-4 w-4" />
-                )}
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 space-y-2">
-              {examplePrompts.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => setMessage(prompt)}
-                  className="border-border bg-secondary/30 text-secondary-foreground hover:bg-secondary/50 w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Chat messages */}
           {messages.map((msg) => (
@@ -156,7 +123,7 @@ export function ChatPanel() {
       <div className="border-border shrink-0 border-t p-3 sm:p-4">
         <div className="relative">
           <Textarea
-            placeholder="Describe the model you want to create... (Paste images with Ctrl+V)"
+            placeholder="Describe the model you want to create... "
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -172,7 +139,7 @@ export function ChatPanel() {
         </div>
 
         <div className="mt-2 flex items-center gap-2 sm:mt-3">
-          <Select defaultValue="gemini">
+          <Select defaultValue="spacy">
             <SelectTrigger className="border-border bg-secondary text-secondary-foreground min-w-0 flex-1">
               <div className="flex items-center gap-2 truncate">
                 <Sparkles className="text-primary h-4 w-4 shrink-0" />
@@ -180,9 +147,7 @@ export function ChatPanel() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="gemini">Gemini 3 Flash Preview</SelectItem>
-              <SelectItem value="gpt4">GPT-4 Turbo</SelectItem>
-              <SelectItem value="claude">Claude 3 Opus</SelectItem>
+              <SelectItem value="spacy">spacy-circuit-ai</SelectItem>
             </SelectContent>
           </Select>
 

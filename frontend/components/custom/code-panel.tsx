@@ -169,10 +169,10 @@ export function CodePanel({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-card-foreground hover:bg-secondary gap-2 px-3 py-1.5"
+                className="text-card-foreground hover:bg-secondary gap-2 px-3 py-1.5 text-sm"
                 onClick={() => copyTextToClipboard(netlist)}
               >
-                <Copy className="h-4 w-4" />
+                <Copy className="h-2 w-2" />
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
             </div>
@@ -201,7 +201,7 @@ export function CodePanel({
         </div>
       </ResizablePanel>
 
-      <ResizableHandle className="bg-border" />
+      <ResizableHandle className="bg-border hover:bg-primary/50" />
 
       <ResizablePanel defaultSize={40} minSize={20}>
         <div className="bg-card flex h-full flex-col ">
