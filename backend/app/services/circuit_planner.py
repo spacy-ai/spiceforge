@@ -35,7 +35,7 @@ class CircuitBlueprint:
 
 class OpenCodeClient:
     DEFAULT_BASE = "https://opencode.ai/zen/v1"
-    DEFAULT_MODEL = "minimax-m2.5-free"
+    DEFAULT_MODEL = "mimo-v2.5-free"
 
     def __init__(
         self,
@@ -96,6 +96,9 @@ class OpenCodeClient:
             "max_tokens": max_tokens or self.max_tokens,
             "temperature": temperature if temperature is not None else self.temperature,
         }
+
+        if response_format == "json":
+            payload["response_format"] = {"type": "json_object"}
 
         resp = self._session.post(
             f"{self.api_base}/chat/completions",
@@ -345,7 +348,10 @@ Ground node is "0" everywhere"""
             response_format="json",
         )
 
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"LLM returned invalid JSON: {e}\nRaw output:\n{raw[:500]}")
         blueprint = CircuitBlueprint(
             circuit_id=data.get("circuit_id", "unnamed"),
             description=data.get("description", ""),

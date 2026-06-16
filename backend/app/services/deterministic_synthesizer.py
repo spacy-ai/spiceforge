@@ -37,10 +37,6 @@ class DeterministicSynthesizer:
         title = blueprint.get("title", "SPICY Circuit")
         builder.title(title)
 
-        description = blueprint.get("description", "")
-        if description:
-            builder.comment(description)
-
         components = blueprint.get("components", [])
         for comp in components:
             self._render_component(builder, comp)
@@ -63,10 +59,6 @@ class DeterministicSynthesizer:
 
         title = blueprint.get("title", "SPICY Circuit")
         builder.title(title)
-
-        description = blueprint.get("description", "")
-        if description:
-            builder.comment(description)
 
         components = blueprint.get("components", [])
         seen_models: set[str] = set()
