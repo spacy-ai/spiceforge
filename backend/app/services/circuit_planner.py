@@ -150,17 +150,23 @@ COMPONENT NAMES:
 - Number sequentially per type: R1, R2, R3 (never R1, R3, R7)
 - Nodes shared between components must use identical strings
 COMPONENT PARAMETERS BY TYPE:
-- resistor:       { "resistance": <ohms> }
-- capacitor:      { "capacitance": <farads> }
-- inductor:       { "inductance": <henries> }
-- voltage_source: { "dc_value": <volts> }
-- current_source: { "dc_value": <amps> }
+- resistor:       { "resistance": <number> }           — ONLY numeric, e.g. 10000, never "10k" or "10000 ohms"
+- capacitor:      { "capacitance": <number> }          — ONLY numeric in farads, e.g. 1e-6
+- inductor:       { "inductance": <number> }           — ONLY numeric in henries
+- voltage_source: { "dc_value": <number> }             — ONLY numeric in volts
+- current_source: { "dc_value": <number> }             — ONLY numeric in amps
 - diode:          { "model": "<model_name>" }
-- mosfet:         { "w": <width>, "l": <length>, "model": "<model_name>" }
+- mosfet:         { "w": <number>, "l": <number>, "model": "<model_name>" }
 - bjt:            { "model": "<model_name>" }
 - opamp:          { "model": "<model_name>" }
     nodes format: ["output", "inverting_input", "non_inverting_input"]
     Example: U1 nodes ["Vout", "Vin-", "Vin+"]
+STRICT PARAMETER RULES:
+- The "parameters" object MUST contain ONLY the required key for that component type.
+- NEVER put "description", "value", "note", "rating", "tolerance", or any free-text field inside "parameters".
+- ALL parameter values MUST be numeric (int or float), NEVER strings.
+- WRONG: { "resistance": "10k ohms" }  or  { "description": "5000 ohms" }
+- RIGHT: { "resistance": 10000 }
 ###
 ANALYSIS RULES:
 EXPLICIT INTENT ALWAYS WINS. Map user keywords as follows:
@@ -263,25 +269,62 @@ Shared nodes use identical strings across all components referencing them
 JSON is strictly valid — no trailing commas, no comments, all brackets closed
 Ground node is "0" everywhere"""
 
+    _REQUIRED_PARAMS_BY_TYPE = {
+        "resistor": "resistance",
+        "capacitor": "capacitance",
+        "inductor": "inductance",
+        "voltage_source": "dc_value",
+        "current_source": "dc_value",
+    }
+
+    _DEFAULT_VALUES = {
+        "resistor": 1000,
+        "capacitor": 1e-6,
+        "inductor": 1e-3,
+        "voltage_source": 5,
+        "current_source": 0.001,
+    }
+
     @staticmethod
-    def _apply_safety_fixes(blueprint: CircuitBlueprint) -> CircuitBlueprint:
-        fixed_components = []
-        for comp in blueprint.components:
-            params = dict(comp.parameters)
-            comp_type = comp.component_type.lower()
-            if comp_type == "voltage_source" and "dc_value" not in params:
-                params["dc_value"] = 5
-            elif comp_type == "current_source" and "dc_value" not in params:
-                params["dc_value"] = 1
-            fixed_components.append(
-                ComponentSpec(
-                    component_type=comp.component_type,
-                    name=comp.name,
-                    nodes=list(comp.nodes),
-                    parameters=params,
-                    model=comp.model,
-                )
-            )
+    def _extract_numeric(value) -> float:
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            import re
+            match = re.search(r"[\d.]+", value)
+            if match:
+                return float(match.group())
+        return 0.0
+
+    @classmethod
+    def _fix_component_params(cls, comp: ComponentSpec) -> ComponentSpec:
+        params = dict(comp.parameters)
+        comp_type = comp.component_type.lower()
+        required = cls._REQUIRED_PARAMS_BY_TYPE.get(comp_type)
+
+        if required and required not in params:
+            # Try to extract a numeric value from any wrong parameter
+            for key, val in list(params.items()):
+                if key in ("description", "value", "rating", "tolerance", "note"):
+                    extracted = cls._extract_numeric(val)
+                    if extracted > 0:
+                        params[required] = extracted
+                        del params[key]
+                        break
+            else:
+                params[required] = cls._DEFAULT_VALUES.get(comp_type, 0)
+
+        return ComponentSpec(
+            component_type=comp.component_type,
+            name=comp.name,
+            nodes=list(comp.nodes),
+            parameters=params,
+            model=comp.model,
+        )
+
+    @classmethod
+    def _apply_safety_fixes(cls, blueprint: CircuitBlueprint) -> CircuitBlueprint:
+        fixed_components = [cls._fix_component_params(c) for c in blueprint.components]
 
         fixed_analyses = []
         for analysis in blueprint.analyses:
@@ -297,7 +340,7 @@ Ground node is "0" everywhere"""
                 params.setdefault("start_freq", 1)
                 params.setdefault("stop_freq", 1e6)
                 params.setdefault("num_points", 100)
-            elif atype == "dc" or atype == "dc_sweep":
+            elif atype in ("dc", "dc_sweep"):
                 params = analysis.setdefault("parameters", {})
                 params.setdefault("source", "V1")
                 params.setdefault("start", 0)
@@ -373,4 +416,4 @@ Ground node is "0" everywhere"""
         return blueprint
 
     def create_plan_strict(self, description: str) -> CircuitBlueprint:
-        return self.create_plan(description, apply_safety_fixes=False)
+        return self.create_plan(description, apply_safety_fixes=True)

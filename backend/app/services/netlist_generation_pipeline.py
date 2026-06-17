@@ -263,14 +263,17 @@ class NetlistGenerationPipeline:
             )
 
         try:
-            updated = self._modifier.modify(existing_blueprint, prompt)
-            if not updated:
+            modify_result = self._modifier.modify(existing_blueprint, prompt)
+            if not modify_result:
                 return PipelineResult(
                     success=False,
                     intent=intent,
                     blueprint=existing_blueprint,
                     error="Modification failed",
                 )
+
+            updated = modify_result.blueprint
+            changes_summary = modify_result.changes_summary
 
             validation = self._validate(updated)
             if not validation.is_valid:
@@ -292,6 +295,7 @@ class NetlistGenerationPipeline:
                 synthesis=synthesis,
                 title=normalized.get("title", ""),
                 summary=normalized.get("summary", ""),
+                changes_summary=changes_summary,
             )
         except Exception as exc:
             return PipelineResult(

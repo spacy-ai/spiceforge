@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import subprocess
 from pathlib import Path
@@ -12,6 +13,31 @@ def run_command(command: list[str]):
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+
+def ensure_postgres():
+    """Start PostgreSQL if not already running."""
+    try:
+        result = subprocess.run(
+            ["pg_isready", "-h", "localhost", "-p", "5432"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0:
+            print("PostgreSQL is already running.")
+            return
+
+        print("Starting PostgreSQL...")
+        subprocess.run(
+            ["pg_ctlcluster", "18", "main", "start"],
+            check=True,
+        )
+        print("PostgreSQL started.")
+    except subprocess.CalledProcessError:
+        print("WARNING: Could not start PostgreSQL automatically.")
+        print("  Run manually: sudo pg_ctlcluster 18 main start")
+        print("  Sessions will not persist until PostgreSQL is running.")
+    except FileNotFoundError:
+        print("WARNING: pg_isready not found. Skipping PostgreSQL check.")
 
 
 def _latest_revision_file() -> Path | None:
@@ -47,6 +73,7 @@ def migrate():
 
 
 def runserver():
+    ensure_postgres()
     print("Starting FastAPI server...")
     run_command([
         "uvicorn",
