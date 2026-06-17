@@ -17,13 +17,14 @@ C1 out 0 100n
 """,
 
     # ── Two Stage RC Network ──────────────────────────────────────────────
-    "two_stage_rc": """
-Two Stage RC Network
-V1 vin 0 DC 5V
-R1 vin n1 1k
-C1 n1 0 100n
-R2 n1 n2 1k
-C2 n2 0 100n
+    "rc low pas": """
+* RC Low Pass Filter
+V1 Vin 0 DC 1.0
+R1 Vin Vout 1k
+C1 Vout 0 100u
+
+.ac dec 50 1.0 100000.0
+.end
 """,
 
 }
