@@ -101,7 +101,7 @@ class OpenCodeClient:
             payload["response_format"] = {"type": "json_object"}
 
         resp = self._session.post(
-            f"{self.api_base}/chat/completions",
+            f"{self.api_base}",
             json=payload,
             timeout=self.timeout,
         )
