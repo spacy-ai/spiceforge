@@ -120,7 +120,7 @@ class ComponentValidator:
         "inductor": 2,
         "mosfet": 4,
         "bjt": 3,
-        "opamp": 5,
+        "opamp": 3,
         "voltage_source": 2,
         "current_source": 2,
         "diode": 2,
@@ -200,7 +200,18 @@ class ComponentValidator:
         else:
             required = cls.REQUIRED_PARAMS.get(comp_type, [])
             for req_param in required:
-                if req_param not in params:
+                # "model" lives at component level, not inside "parameters"
+                if req_param == "model":
+                    if not comp.get("model"):
+                        issues.append(
+                            ValidationIssue(
+                                severity=ValidationSeverity.ERROR,
+                                category="missing_parameter",
+                                message=f"Component '{name}' missing required parameter '{req_param}'",
+                                component_name=name,
+                            )
+                        )
+                elif req_param not in params:
                     issues.append(
                         ValidationIssue(
                             severity=ValidationSeverity.ERROR,

@@ -159,6 +159,8 @@ COMPONENT PARAMETERS BY TYPE:
 - mosfet:         { "w": <width>, "l": <length>, "model": "<model_name>" }
 - bjt:            { "model": "<model_name>" }
 - opamp:          { "model": "<model_name>" }
+    nodes format: ["output", "inverting_input", "non_inverting_input"]
+    Example: U1 nodes ["Vout", "Vin-", "Vin+"]
 ###
 ANALYSIS RULES:
 EXPLICIT INTENT ALWAYS WINS. Map user keywords as follows:
