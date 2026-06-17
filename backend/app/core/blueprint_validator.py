@@ -286,11 +286,90 @@ class NodeValidator:
                     )
                 )
 
+        floating = cls._detect_floating_nodes(components, ground_node)
+        for node in floating:
+            issues.append(
+                ValidationIssue(
+                    severity=ValidationSeverity.WARNING,
+                    category="floating_node",
+                    message=f"Node '{node}' connects to only one component (floating)",
+                    node=node,
+                )
+            )
+
+        disconnected = cls._detect_disconnected_subgraphs(components, ground_node)
+        for comp_name in disconnected:
+            issues.append(
+                ValidationIssue(
+                    severity=ValidationSeverity.WARNING,
+                    category="disconnected_subgraph",
+                    message=f"Component '{comp_name}' is disconnected from ground",
+                    component_name=comp_name,
+                )
+            )
+
         return issues
+
+    @classmethod
+    def _detect_floating_nodes(
+        cls, components: list[dict], ground_node: str
+    ) -> set[str]:
+        node_degree: dict[str, int] = {}
+        for comp in components:
+            for node in comp.get("nodes", []):
+                node_degree[node] = node_degree.get(node, 0) + 1
+        return {
+            node for node, deg in node_degree.items()
+            if deg < 2 and node != ground_node
+        }
+
+    @classmethod
+    def _detect_disconnected_subgraphs(
+        cls, components: list[dict], ground_node: str
+    ) -> list[str]:
+        if not components:
+            return []
+
+        adj: dict[str, set[str]] = {}
+        comp_nodes: dict[str, set[str]] = {}
+
+        for comp in components:
+            name = comp.get("name", "unknown")
+            nodes = comp.get("nodes", [])
+            comp_nodes[name] = set(nodes)
+            for node in nodes:
+                if node not in adj:
+                    adj[node] = set()
+                for other_node in nodes:
+                    if other_node != node:
+                        adj[node].add(other_node)
+
+        if ground_node not in adj:
+            return []
+
+        visited: set[str] = set()
+        stack = [ground_node]
+        while stack:
+            node = stack.pop()
+            if node in visited:
+                continue
+            visited.add(node)
+            for neighbor in adj.get(node, set()):
+                if neighbor not in visited:
+                    stack.append(neighbor)
+
+        disconnected = []
+        for comp_name, nodes in comp_nodes.items():
+            if not nodes:
+                continue
+            if not any(n in visited for n in nodes):
+                disconnected.append(comp_name)
+
+        return disconnected
 
 
 class AnalysisValidator:
-    ALLOWED_ANALYSIS_TYPES = {"ac", "dc", "transient", "op", "dc_sweep"}
+    ALLOWED_ANALYSIS_TYPES = {"ac", "dc", "transient", "op", "dc_sweep", "noise", "tf", "pz"}
 
     REQUIRED_PARAMS = {
         "ac": ["start_freq", "stop_freq", "num_points"],
@@ -298,6 +377,14 @@ class AnalysisValidator:
         "transient": ["tstart", "tstop", "tstep"],
         "op": [],
         "dc_sweep": ["sweep_variable", "start", "stop", "increment"],
+        "noise": [],
+        "tf": [],
+        "pz": [],
+    }
+
+    PARAM_RANGES = {
+        "ac": {"start_freq": (1e-6, 1e15), "stop_freq": (1e-6, 1e15), "num_points": (1, 100000)},
+        "transient": {"tstep": (1e-15, 1e6), "tstop": (1e-15, 1e6)},
     }
 
     @classmethod
@@ -357,6 +444,23 @@ class AnalysisValidator:
                                 message=f"Analysis '{analysis_type}' missing required parameter '{req_param}'",
                             )
                         )
+
+                ranges = cls.PARAM_RANGES.get(analysis_type, {})
+                for param_name, (lo, hi) in ranges.items():
+                    if param_name in params:
+                        val = params[param_name]
+                        try:
+                            fval = float(val) if not isinstance(val, (int, float)) else val
+                            if fval < lo or fval > hi:
+                                issues.append(
+                                    ValidationIssue(
+                                        severity=ValidationSeverity.WARNING,
+                                        category="parameter_out_of_range",
+                                        message=f"Analysis '{analysis_type}' parameter '{param_name}' = {fval} is outside recommended range [{lo}, {hi}]",
+                                    )
+                                )
+                        except (ValueError, TypeError):
+                            pass
 
         return issues
 

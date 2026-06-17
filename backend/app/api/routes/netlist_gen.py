@@ -4,9 +4,9 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
 
-from app.services.circuit_planner import Planner
-from app.core.blueprint_validator import validate_circuit_blueprint, ValidationResult
-from app.services.netlist_synthesizer import SpecialistSynthesizer
+from app.core.blueprint_validator import validate_circuit_blueprint
+from app.models.pipeline_models import PipelineResult, SynthesisResult
+from app.services.netlist_generation_pipeline import NetlistGenerationPipeline
 
 router = APIRouter(tags=["netlist generation"])
 
@@ -16,6 +16,7 @@ class GenerateNetlistRequest(BaseModel):
     api_key: Optional[str] = None
     api_base: Optional[str] = None
     model: Optional[str] = None
+    run_simulation: bool = True
 
 
 class GenerateNetlistResponse(BaseModel):
@@ -25,6 +26,9 @@ class GenerateNetlistResponse(BaseModel):
     summary: Optional[str] = None
     python_code: Optional[str] = None
     error: Optional[str] = None
+    blueprint: Optional[dict] = None
+    simulation: Optional[dict] = None
+    clarifications: list[str] = []
 
 
 class ValidateRequest(BaseModel):
@@ -49,69 +53,48 @@ def health():
 
 @router.post("/generate-netlist", response_model=GenerateNetlistResponse)
 def generate_netlist(request: GenerateNetlistRequest):
+    return _pipeline_generate(request)
+
+
+def _pipeline_generate(request: GenerateNetlistRequest) -> GenerateNetlistResponse:
     try:
-        planner = Planner(
+        pipeline = NetlistGenerationPipeline(
             api_key=request.api_key,
             api_base=request.api_base,
             model=request.model,
         )
 
-        blueprint = planner.create_plan(request.prompt)
+        result: PipelineResult = pipeline.run(
+            prompt=request.prompt,
+            run_simulation=request.run_simulation,
+        )
 
-        validation_result = validate_circuit_blueprint(
-            {
-                "circuit_id": blueprint.circuit_id,
-                "description": blueprint.description,
-                "title": blueprint.title,
-                "input_nodes": blueprint.input_nodes,
-                "output_nodes": blueprint.output_nodes,
-                "ground_node": blueprint.ground_node,
-                "components": [
-                    {
-                        "component_type": c.component_type,
-                        "name": c.name,
-                        "nodes": c.nodes,
-                        "parameters": c.parameters,
-                        "model": c.model,
-                    }
-                    for c in blueprint.components
-                ],
-                "analyses": blueprint.analyses,
-                "constraints": blueprint.constraints,
-                "topology_notes": blueprint.topology_notes,
-                "design_decisions": blueprint.design_decisions,
+        netlist = ""
+        if result.synthesis:
+            netlist = result.synthesis.netlist
+
+        sim_dict = None
+        if result.simulation:
+            sim_dict = {
+                "success": result.simulation.success,
+                "analyses": result.simulation.analyses,
+                "results": result.simulation.results,
+                "stdout": result.simulation.stdout[-2000:] if result.simulation.stdout else "",
+                "stderr": result.simulation.stderr[-2000:] if result.simulation.stderr else "",
+                "error": result.simulation.error,
+                "convergence_failures": result.simulation.convergence_failures,
             }
-        )
-
-        if not validation_result.is_valid:
-            error_messages = [
-                f"{i.category}: {i.message}" for i in validation_result.issues
-            ]
-            return GenerateNetlistResponse(
-                success=False,
-                netlist="",
-                summary=None,
-                error=f"Validation failed: {'; '.join(error_messages)}",
-                title=None,
-            )
-
-        synthesizer = SpecialistSynthesizer(
-            api_key=request.api_key,
-            api_base=request.api_base,
-            model=request.model,
-        )
-
-        result = synthesizer.synthesize(validation_result.validated_blueprint)
-
-        title = blueprint.title or blueprint.description[:50] if blueprint.description else None
 
         return GenerateNetlistResponse(
-            success=True,
-            title=title,
-            netlist=result.netlist or "",
-            summary=blueprint.summary or None,
-            python_code=result.python_code,
-            error=None,
+            success=result.success,
+            title=result.title or "",
+            netlist=netlist,
+            summary=result.summary or "",
+            python_code=None,
+            error=result.error,
+            blueprint=result.blueprint,
+            simulation=sim_dict,
+            clarifications=result.clarifications,
         )
 
     except Exception as exc:

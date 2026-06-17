@@ -35,7 +35,7 @@ class CircuitBlueprint:
 
 class OpenCodeClient:
     DEFAULT_BASE = "https://opencode.ai/zen/v1"
-    DEFAULT_MODEL = "minimax-m2.5-free"
+    DEFAULT_MODEL = "mimo-v2.5-free"
 
     def __init__(
         self,
@@ -96,6 +96,9 @@ class OpenCodeClient:
             "max_tokens": max_tokens or self.max_tokens,
             "temperature": temperature if temperature is not None else self.temperature,
         }
+
+        if response_format == "json":
+            payload["response_format"] = {"type": "json_object"}
 
         resp = self._session.post(
             f"{self.api_base}/chat/completions",
@@ -331,7 +334,7 @@ Ground node is "0" everywhere"""
             max_tokens=max_tokens,
         )
 
-    def create_plan(self, description: str) -> CircuitBlueprint:
+    def create_plan(self, description: str, apply_safety_fixes: bool = True) -> CircuitBlueprint:
         prompt = (
             f"Analyze the following circuit description and return a complete JSON blueprint.\n\n"
             f"DESCRIPTION:\n{description}\n\n"
@@ -345,7 +348,10 @@ Ground node is "0" everywhere"""
             response_format="json",
         )
 
-        data = json.loads(raw)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"LLM returned invalid JSON: {e}\nRaw output:\n{raw[:500]}")
         blueprint = CircuitBlueprint(
             circuit_id=data.get("circuit_id", "unnamed"),
             description=data.get("description", ""),
@@ -360,4 +366,9 @@ Ground node is "0" everywhere"""
             design_decisions=data.get("design_decisions", []),
             summary=data.get("summary", ""),
         )
-        return self._apply_safety_fixes(blueprint)
+        if apply_safety_fixes:
+            return self._apply_safety_fixes(blueprint)
+        return blueprint
+
+    def create_plan_strict(self, description: str) -> CircuitBlueprint:
+        return self.create_plan(description, apply_safety_fixes=False)
