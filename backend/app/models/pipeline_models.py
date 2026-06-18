@@ -72,6 +72,7 @@ class PipelineResult:
     summary: str = ""
     error: Optional[str] = None
     clarifications: list[str] = field(default_factory=list)
+    changes_summary: Optional[str] = None
 
 
 @dataclass

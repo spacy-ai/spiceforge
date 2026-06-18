@@ -136,8 +136,19 @@ class CircuitBuilder:
         self._components.append(" ".join(parts))
         return self
 
-    def opamp(self, name: str, nout: str, ninv: str, nnoninv: str) -> "CircuitBuilder":
-        self._components.append(f"U{name} {nout} {ninv} {nnoninv} 0 0 OP07")
+    def opamp(
+        self,
+        name: str,
+        nout: str,
+        ninv: str,
+        nnoninv: str,
+        model: str = "OP07",
+        npower_pos: str = "0",
+        npower_neg: str = "0",
+    ) -> "CircuitBuilder":
+        # ngspice models ideal opamp as a VCVS (E-element) with high gain
+        # Syntax: Ename n_out n_ref n_plus n_minus gain
+        self._components.append(f"E{name} {nout} 0 {nnoninv} {ninv} 100k")
         return self
 
     def subcircuit(
