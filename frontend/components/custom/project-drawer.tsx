@@ -97,7 +97,7 @@ export function ProjectDrawer({ currentCircuitId }: { currentCircuitId?: string 
           <span className="hidden lg:inline">Projects</span>
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-h-[70vh] sm:max-h-[75vh]">
+      <DrawerContent className="max-h-[70vh] sm:max-h-[85vh]">
         <div className="mx-auto w-full max-w-5xl">
           <DrawerHeader>
             <VisuallyHidden>

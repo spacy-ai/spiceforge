@@ -43,7 +43,7 @@ export default function RootLayout({
           {children}
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
-        <Toaster />
+        <Toaster duration={1500} />
       </body>
     </html>
   );

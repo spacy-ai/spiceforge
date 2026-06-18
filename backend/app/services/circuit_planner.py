@@ -4,8 +4,10 @@ import json
 import os
 from dataclasses import dataclass, field
 from typing import Optional
-
+from dotenv import load_dotenv
 import requests
+
+load_dotenv()  # Load environment variables from .env file
 
 
 @dataclass
@@ -34,8 +36,7 @@ class CircuitBlueprint:
 
 
 class OpenCodeClient:
-    DEFAULT_BASE = "https://opencode.ai/zen/v1"
-    DEFAULT_MODEL = "mimo-v2.5-free"
+      
 
     def __init__(
         self,
@@ -43,19 +44,19 @@ class OpenCodeClient:
         api_base: Optional[str] = None,
         model: Optional[str] = None,
         temperature: float = 0.3,
-        max_tokens: int = 3000,
-        timeout: int = 54,
+        max_tokens: int = 100000,
+        timeout: int = 12000,
     ):
-        self.api_key = api_key or os.environ.get("OPENCODE_API_KEY", "")
+        self.api_key = os.getenv("OPENCODE_API_KEY") if api_key is None else api_key
         if not self.api_key:
             raise ValueError(
                 "OpenCode API key is required. Set OPENCODE_API_KEY env var."
             )
 
         self.api_base = (
-            api_base or os.environ.get("OPENCODE_API_BASE", self.DEFAULT_BASE)
+            api_base or os.getenv("OPENCODE_API_BASE")
         ).rstrip("/")
-        self.model = model or os.environ.get("OPENCODE_MODEL", self.DEFAULT_MODEL)
+        self.model = model or os.getenv("OPENCODE_MODEL")
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.timeout = timeout
@@ -101,13 +102,24 @@ class OpenCodeClient:
             payload["response_format"] = {"type": "json_object"}
 
         resp = self._session.post(
-            f"{self.api_base}/chat/completions",
+            f"{self.api_base}",
             json=payload,
             timeout=self.timeout,
         )
         resp.raise_for_status()
         data = resp.json()
-        content = data["choices"][0]["message"]["content"]
+        if "error" in data:
+            raise ValueError(f"OpenCode error: {data['error']}")
+
+        choice = (data.get("choices") or [{}])[0]
+        content = (
+            choice.get("message", {}).get("content")
+            or choice.get("text")
+            or ""
+        )
+
+        if not content:
+            raise ValueError(f"OpenCode returned empty content: {data}")
 
         if response_format == "json":
             content = self._strip_json_fences(content)
