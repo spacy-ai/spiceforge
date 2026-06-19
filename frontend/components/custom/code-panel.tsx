@@ -17,20 +17,16 @@ interface ConsoleMessage {
 
 export function CodePanel({
   onSimulate,
-  initialNetlist = '',
+  netlist,
+  onNetlistChange,
   circuitId,
 }: {
-  onSimulate?: (
-    netlist: string,
-    svgContent?: string,
-    simulationResponse?: SimulationResponse
-  ) => void;
-  initialNetlist?: string;
+  onSimulate?: (netlist: string) => Promise<void>;
+   netlist: string;
+   onNetlistChange: (value: string) => void;
   circuitId?: string;
 }) {
-  const [netlist, setNetlist] = useState(
-    initialNetlist || '.title New Circuit\n\n.control\nop\n.endc\n.end'
-  );
+ 
   const [copied, setCopied] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const messageCounterRef = useRef(0);
@@ -38,14 +34,6 @@ export function CodePanel({
     { id: '1', type: 'info', text: 'Console ready...', timestamp: new Date() },
   ]);
 
-  useEffect(() => {
-    if (initialNetlist) {
-      setNetlist(initialNetlist);
-      setMessages([
-        { id: '1', type: 'info', text: `Loaded circuit ${circuitId}`, timestamp: new Date() },
-      ]);
-    }
-  }, [initialNetlist, circuitId]);
 
   async function copyTextToClipboard(text: string) {
     try {
@@ -73,61 +61,17 @@ export function CodePanel({
   };
 
   const handleSimulate = async () => {
-    setIsSimulating(true);
-    addMessage('info', `Simulating circuit ${circuitId || 'unknown'}...`);
+  setIsSimulating(true);
 
-    // Validate netlist
-    if (!netlist.trim()) {
-      addMessage('error', 'Netlist is empty');
-      setIsSimulating(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${apiBase}/simulate/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          netlist,
-          options: {
-            include_schematic: true,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Simulation request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.status === 'error') {
-        const errMessage = data?.error?.message || 'Simulation failed';
-        const hint = data?.error?.hint ? ` Hint: ${data.error.hint}` : '';
-        addMessage('error', `${errMessage}${hint}`);
-
-        if (data?.stderr) {
-          addMessage('warning', `stderr: ${data.stderr}`);
-        }
-        if (data?.stdout) {
-          addMessage('info', `stdout: ${data.stdout}`);
-        }
-      } else {
-        addMessage('success', `Simulation of ${circuitId} completed successfully`);
-        addMessage('info', 'Simulation results received from backend');
-
-        if (onSimulate) {
-          onSimulate(netlist, data?.schematic?.content, data as SimulationResponse);
-        }
-      }
-    } catch (error) {
-      addMessage('error', `Simulation failed for ${circuitId}: Check netlist syntax`);
-    } finally {
-      setIsSimulating(false);
-    }
-  };
+  try {
+    await onSimulate?.(netlist);
+    addMessage('success', 'Simulation completed');
+  } catch {
+    addMessage('error', 'Simulation failed');
+  } finally {
+    setIsSimulating(false);
+  }
+};
 
   const clearConsole = () => {
     setMessages([{ id: '1', type: 'info', text: 'Console cleared', timestamp: new Date() }]);
@@ -180,7 +124,7 @@ export function CodePanel({
 
           <textarea
             value={netlist}
-            onChange={(e) => setNetlist(e.target.value)}
+            onChange={(e) => onNetlistChange(e.target.value)}
             className="bg-secondary/40 text-secondary-foreground flex-1 resize-none border-none p-4 font-mono text-sm focus:outline-none"
           />
 

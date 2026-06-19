@@ -24,7 +24,6 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { set } from 'react-hook-form';
 
 // Base URL of the FastAPI netlist generation service.
 // Set NEXT_PUBLIC_NETLIST_API_URL in your .env.local, e.g.
@@ -45,6 +44,10 @@ type NetlistResult = {
   simulation?: Record<string, unknown> | null;
   clarifications: string[];
 };
+
+interface ChatPanelProps {
+  onNetlistGenerated: (netlist: string) => void;
+}
 
 type Message =
   | { id: number; role: 'user'; text: string }
@@ -77,7 +80,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-export function ChatPanel() {
+export function ChatPanel( { onNetlistGenerated }: ChatPanelProps ) {
   const [message, setMessage] = useState('');
   const [heading, setHeading] = useState('New Design');
   const [isEditingHeading, setIsEditingHeading] = useState(false);
@@ -93,55 +96,58 @@ export function ChatPanel() {
   }, [messages]);
 
   async function sendMessage() {
-    const text = message.trim();
-    if (!text || isGenerating) return;
+  const text = message.trim();
+  if (!text || isGenerating) return;
 
-    const userMessageId = Date.now();
-    const loadingId = userMessageId + 1;
+  const userMessageId = Date.now();
+  const loadingId = userMessageId + 1;
 
-    setMessages((prev) => [
-      ...prev,
-      { id: userMessageId, role: 'user', text },
-      { id: loadingId, role: 'assistant', kind: 'loading' },
-    ]);
-    setMessage('');
-    setIsGenerating(true);
+  setMessages((prev) => [
+    ...prev,
+    { id: userMessageId, role: 'user', text },
+    { id: loadingId, role: 'assistant', kind: 'loading' },
+  ]);
+  setMessage('');
+  setIsGenerating(true);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/netlist/generate-netlist`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: text,
-          run_simulation: true,
-        }),
-      });
+  try {
+    const response = await fetch(`${API_BASE_URL}/netlist/generate-netlist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: text,
+        run_simulation: true,
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
+    if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
 
-      const data: NetlistResult = await response.json();
+    const data: NetlistResult = await response.json();
 
-      setMessages((prev) =>
-        prev.map((m) => (m.id === loadingId ? { id: loadingId, role: 'assistant', kind: 'response', result: data } : m))
-      );
-    } catch (err) {
-      const fallback: NetlistResult = {
-        success: false,
-        netlist: '',
-        clarifications: [],
-        error: err instanceof Error ? err.message : 'Something went wrong.',
-      };
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === loadingId ? { id: loadingId, role: 'assistant', kind: 'response', result: fallback } : m
-        )
-      );
-    } finally {
-      setIsGenerating(false);
+    setMessages((prev) =>
+      prev.map((m) => (m.id === loadingId ? { id: loadingId, role: 'assistant', kind: 'response', result: data } : m))
+    );
+
+    if (data.success && data.netlist) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      onNetlistGenerated(data.netlist);
     }
+  } catch (err) {
+    const fallback: NetlistResult = {
+      success: false,
+      netlist: '',
+      clarifications: [],
+      error: err instanceof Error ? err.message : 'Something went wrong.',
+    };
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === loadingId ? { id: loadingId, role: 'assistant', kind: 'response', result: fallback } : m
+      )
+    );
+  } finally {
+    setIsGenerating(false);
   }
+}
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
