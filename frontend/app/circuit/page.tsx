@@ -13,6 +13,7 @@ import { apiBase } from '@/lib/config';
 import type { SimulationResponse } from '@/lib/types/simulation';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { toast } from 'sonner';
+import { run } from 'node:test';
 
 interface CircuitData {
   id: number;
@@ -30,6 +31,7 @@ function DashboardContent() {
   const [netlist, setNetlist] = useState('');
   const [simulation, setSimulation] = useState<SimulationResponse | null>(null);
   const [svgExportUrl, setSvgExportUrl] = useState<string | null>(null);
+  const [previewKey, setPreviewKey] = useState(0);
   const router = useRouter();
   const codePanelRef = useRef<ImperativePanelHandle>(null);
   const chatPanelRef = useRef<ImperativePanelHandle>(null);
@@ -37,6 +39,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (!searchParams) return;
+
 
     const resolveCircuit = async () => {
       const idParam = searchParams.get('circuitid');
@@ -88,13 +91,9 @@ function DashboardContent() {
 
   const generateSvgExport = async (id: string, netlistContent: string) => {
     try {
-      console.log('Generating SVG export for circuit:', id);
-      
       const response = await fetch(`${apiBase}/export/svg`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           circuit_id: parseInt(id),
           netlist: netlistContent,
@@ -105,18 +104,14 @@ function DashboardContent() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to generate SVG export: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to generate SVG export: ${response.status}`);
 
       const data = await response.json();
-      console.log('Export response:', data);
       
       if (data.status === 'success' && data.export_id) {
-        // Construct the download URL as shown in the documentation
-        const downloadUrl = `${apiBase}/export/svg/${data.export_id}`;
-        console.log('Download URL:', downloadUrl);
-        setSvgExportUrl(downloadUrl);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        setSvgExportUrl(`${apiBase}/export/svg/${data.export_id}`);
+        setPreviewKey(prev => prev + 1);
       } else {
         throw new Error('Export failed - invalid response');
       }
@@ -190,29 +185,64 @@ function DashboardContent() {
     }
   };
 
-  const handleSimulate = async (
-    updatedNetlist: string,
-    _svgContent?: string,
-    simulationResponse?: SimulationResponse
-  ) => {
-    setNetlist(updatedNetlist);
-    if (simulationResponse) {
-      setSimulation(simulationResponse);
-    }
-
-    if (circuitData) {
-      setCircuitData({
-        ...circuitData,
-        netlist: updatedNetlist,
+  const runSimulation = async (netlistToSimulate: string) => {
+  try {
+    setNetlist(netlistToSimulate);
+    
+    let currentCircuitId = circuitId;
+    
+    if (!currentCircuitId) {
+      const createRes = await fetch('/api/circuits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Untitled Project',
+          netlist: netlistToSimulate,
+        }),
       });
+
+      if (!createRes.ok) throw new Error('Failed to create circuit');
+
+      const created = (await createRes.json()) as { id: number };
+      currentCircuitId = String(created.id);
+      setCircuitId(currentCircuitId);
+      router.replace(`/circuit?circuitid=${currentCircuitId}`);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } else {
+      await saveCircuit(netlistToSimulate);
     }
 
-    // Regenerate SVG export with updated netlist
-    if (circuitId) {
-      await generateSvgExport(circuitId, updatedNetlist);
+    const response = await fetch(`${apiBase}/simulate/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        netlist: netlistToSimulate,
+        options: { include_schematic: true },
+      }),
+    });
+
+    if (!response.ok) throw new Error(`Simulation failed`);
+
+    const data = await response.json();
+    setSimulation(data);
+
+    if (currentCircuitId) {
+      await generateSvgExport(currentCircuitId, netlistToSimulate);
     }
 
-    void saveCircuit(updatedNetlist);
+    return data;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+};
+
+  const onNetlistGenerated = async (
+    generatedNetlist: string
+  ) => {
+    setNetlist(generatedNetlist);
+
+    await runSimulation(generatedNetlist);
   };
 
   return (
@@ -239,8 +269,9 @@ function DashboardContent() {
         >
           <CodePanel
             key={`netlist-${circuitId}`}
-            onSimulate={handleSimulate}
-            initialNetlist={netlist}
+            onSimulate={runSimulation}
+            netlist={netlist}
+            onNetlistChange={setNetlist}
             circuitId={circuitId}
           />
         </ResizablePanel>
@@ -262,7 +293,7 @@ function DashboardContent() {
           key={`preview-${circuitId}`}
         >
           <PreviewPanel
-            key={`svg-${circuitId}`}
+            key={`preview-${circuitId}-${previewKey}`}
             circuitId={circuitId}
             svgExportUrl={svgExportUrl}
             simulation={simulation}
@@ -293,7 +324,11 @@ function DashboardContent() {
           collapsedSize={0}
           ref={chatPanelRef}
         >
-          <ChatPanel />
+
+          <ChatPanel
+            onNetlistGenerated={onNetlistGenerated}
+          />
+
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
