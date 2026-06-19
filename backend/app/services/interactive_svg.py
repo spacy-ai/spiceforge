@@ -27,14 +27,6 @@ class StandardSVGRenderer(SVGRenderer):
 
 
 class InteractiveSVGRenderer(SVGRenderer):
-    """
-    Renders circuit SVG with a dark background, gold circuit lines, and white labels.
-
-    Text color is set via matplotlib rcParams before rendering so that matplotlib
-    emits style="fill: <text_color>" directly on glyph groups. Post-render regex
-    then handles strokes and remaining fills.
-    """
-
     def __init__(
         self,
         background_color: str = "#312c24",
@@ -62,40 +54,141 @@ class InteractiveSVGRenderer(SVGRenderer):
         return modified
 
     def _transform_colors(self, svg: str) -> str:
-        fg   = self.circuit_color
-        bg   = self.background_color
+        fg = self.circuit_color
+        bg = self.background_color
+        text_color = self.text_color
 
         result = svg
 
-        # 1. White canvas rect → background color.
-        result = re.sub(r'fill:\s*#ffffff\b',                 f'fill: {bg}', result)
-        result = re.sub(r'fill:\s*rgb\(255,\s*255,\s*255\)',  f'fill: {bg}', result)
+        # 1. Remove existing background rectangles
+        result = re.sub(r'<rect[^>]*width="100%"[^>]*height="100%"[^>]*fill="[^"]*"[^>]*>', '', result)
+        result = re.sub(r'<rect[^>]*fill="[^"]*"[^>]*width="100%"[^>]*height="100%"[^>]*>', '', result)
 
-        # 2. Circuit line strokes.
-        result = re.sub(r'stroke:\s*#000000\b',               f'stroke: {fg}', result)
-        result = re.sub(r'stroke:\s*rgb\(0,\s*0,\s*0\)',      f'stroke: {fg}', result)
+        # 2. Handle text elements - force text color
+        # For <text> elements with fill attribute
+        result = re.sub(
+            r'(<text[^>]*?)fill="[^"]*"',
+            rf'\1fill="{text_color}"',
+            result
+        )
+        # For <text> elements with style containing fill
+        result = re.sub(
+            r'(<text[^>]*?style="[^"]*?)fill:[^;"]*',
+            rf'\1fill:{text_color}',
+            result
+        )
+        # For <text> elements without fill
+        result = re.sub(
+            r'(<text)(?!.*fill=)',
+            rf'\1 fill="{text_color}"',
+            result
+        )
+        
+        # Same for tspan elements
+        result = re.sub(
+            r'(<tspan[^>]*?)fill="[^"]*"',
+            rf'\1fill="{text_color}"',
+            result
+        )
+        result = re.sub(
+            r'(<tspan[^>]*?style="[^"]*?)fill:[^;"]*',
+            rf'\1fill:{text_color}',
+            result
+        )
+        result = re.sub(
+            r'(<tspan)(?!.*fill=)',
+            rf'\1 fill="{text_color}"',
+            result
+        )
 
-        # 3. Remaining black fills (component bodies, arrowheads, etc.).
-        #    Text glyph fills are already set to text_color by rcParams at render
-        #    time, so this only touches genuine circuit fills.
-        result = re.sub(r'fill:\s*#000000\b',                 f'fill: {fg}', result)
-        result = re.sub(r'fill:\s*rgb\(0,\s*0,\s*0\)',        f'fill: {fg}', result)
+        # 3. Handle text path groups (when matplotlib converts text to paths)
+        # Find text groups and change their fill color
+        def replace_text_path_fill(match):
+            group_content = match.group(0)
+            # Change fill in style
+            group_content = re.sub(
+                r'style="[^"]*?fill:#[0-9a-fA-F]{6}',
+                f'style="fill:{text_color}',
+                group_content
+            )
+            group_content = re.sub(
+                r'style="[^"]*?fill:[^;"]*',
+                f'style="fill:{text_color}',
+                group_content
+            )
+            # Change fill attribute
+            group_content = re.sub(
+                r'fill="#[0-9a-fA-F]{6}"',
+                f'fill="{text_color}"',
+                group_content
+            )
+            group_content = re.sub(
+                r'fill="[^"]*"',
+                f'fill="{text_color}"',
+                group_content
+            )
+            return group_content
 
-        # 4. Inject a full-size background rect immediately after the opening <svg> tag.
+        result = re.sub(
+            r'<g id="text_[^"]*"[^>]*>.*?</g>',
+            replace_text_path_fill,
+            result,
+            flags=re.DOTALL
+        )
+
+        # 4. Circuit strokes (keep these as circuit color)
+        result = re.sub(
+            r'stroke:\s*#000000\b',
+            f'stroke:{fg}',
+            result
+        )
+        result = re.sub(
+            r'stroke:\s*rgb\(0,\s*0,\s*0\)',
+            f'stroke:{fg}',
+            result
+        )
+        result = re.sub(
+            r'stroke="\s*#000000\b"',
+            f'stroke="{fg}"',
+            result
+        )
+        result = re.sub(
+            r'stroke="\s*black\b"',
+            f'stroke="{fg}"',
+            result
+        )
+
+        # 5. Component fills - only non-text elements
+        # Skip elements that are part of text groups
+        result = re.sub(
+            r'(<(?!(?:text|tspan|g id="text_))[^>]*?)fill:\s*#000000\b',
+            rf'\1fill:{fg}',
+            result
+        )
+        result = re.sub(
+            r'(<(?!(?:text|tspan|g id="text_))[^>]*?)fill:\s*rgb\(0,\s*0,\s*0\)',
+            rf'\1fill:{fg}',
+            result
+        )
+        result = re.sub(
+            r'(<(?!(?:text|tspan|g id="text_))[^>]*?)fill="\s*#000000\b"',
+            rf'\1fill="{fg}"',
+            result
+        )
+        result = re.sub(
+            r'(<(?!(?:text|tspan|g id="text_))[^>]*?)fill="\s*black\b"',
+            rf'\1fill="{fg}"',
+            result
+        )
+
+        # 6. Add background rectangle
         bg_rect = f'<rect width="100%" height="100%" fill="{bg}"/>'
-        result  = re.sub(r'(<svg[^>]*>)', r'\1' + bg_rect, result, count=1)
+        result = re.sub(r'(<svg[^>]*>)', r'\1' + bg_rect, result, count=1)
 
         return result
 
 
 def _render_svg(code: str, out_path: str, text_color: str | None = None) -> str:
-    """
-    Execute generated schemdraw code and return SVG content as a string.
-
-    If text_color is provided, matplotlib's text.color rcParam is set before
-    rendering so that glyph groups carry an explicit fill style in the SVG output.
-    rcParams are restored to defaults afterward regardless of outcome.
-    """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -105,14 +198,19 @@ def _render_svg(code: str, out_path: str, text_color: str | None = None) -> str:
     out = Path(out_path)
     out.parent.mkdir(parents=True, exist_ok=True)
 
+    # Keep text as actual text elements instead of paths
+    plt.rcParams["svg.fonttype"] = "none"
+    
+    if text_color:
+        plt.rcParams["text.color"] = text_color
+        plt.rcParams["figure.facecolor"] = "none"
+        plt.rcParams["axes.facecolor"] = "none"
+
     exec_code = code.replace(
         "with schemdraw.Drawing() as d:",
         f"with schemdraw.Drawing(file={str(out)!r}, show=False) as d:",
         1,
     )
-
-    if text_color:
-        plt.rcParams["text.color"] = text_color
 
     try:
         exec(exec_code, {"schemdraw": schemdraw, "elm": elm}, {})
@@ -132,7 +230,7 @@ def render_both_svgs(
     unit: int = 3,
 ) -> Dict[str, str]:
     elements = parse_netlist(netlist_text)
-    circuit  = analyse_topology(elements)
+    circuit = analyse_topology(elements)
 
     out = Path(output_dir or "./svg_exports")
     out.mkdir(parents=True, exist_ok=True)
