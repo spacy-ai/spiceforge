@@ -9,6 +9,8 @@ from app.api.routes.measure import router as measure_router
 from app.api.routes.netlist_gen import router as netlist_gen_router
 from app.api.routes.user import router as user_router
 from app.api.routes.svg_export import router as svg_export_router
+from app.api.routes.chet import router as chet_router
+
 
 
 
@@ -32,6 +34,7 @@ def create_app() -> FastAPI:
 	app.include_router(netlist_gen_router, prefix="/netlist", tags=["netlist generation"])
 	app.include_router(user_router, prefix="/users", tags=["users"])
 	app.include_router(svg_export_router)
+	app.include_router(chet_router)
 
 	return app
 

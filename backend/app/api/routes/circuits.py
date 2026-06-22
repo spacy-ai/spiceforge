@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user, get_db, get_optional_current_user
 from app.models.circuit import Circuit
 from app.models.user import User
-from app.schema.circuit import CircuitCreateRequest, CircuitListItem, CircuitResponse, CircuitUpdateRequest
+from app.schema.circuit import CircuitCreateRequest, CircuitListItem, CircuitResponse, CircuitUpdateRequest, CircuitHeadingUpdateRequest
 
 router = APIRouter(prefix="/circuits", tags=["circuits"])
 
@@ -81,4 +81,20 @@ def update_circuit(
     db.refresh(circuit)
     return circuit
 
+
+@router.patch("/{circuit_id}/heading", response_model=CircuitResponse)
+def update_circuit_heading_public(
+    circuit_id: int,
+    payload: CircuitHeadingUpdateRequest,
+    db: Session = Depends(get_db),
+) -> CircuitResponse:
+    circuit = _get_circuit_or_404(db, circuit_id)
+    
+    # Update only the name
+    circuit.name = payload.name
+
+    db.add(circuit)
+    db.commit()
+    db.refresh(circuit)
+    return circuit
 

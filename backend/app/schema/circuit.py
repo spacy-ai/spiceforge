@@ -30,3 +30,6 @@ class CircuitListItem(BaseModel):
     name: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+class CircuitHeadingUpdateRequest(BaseModel):
+    name: str

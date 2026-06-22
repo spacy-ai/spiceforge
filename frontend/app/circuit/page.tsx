@@ -73,6 +73,9 @@ function DashboardContent() {
         setCircuitData(data);
         setNetlist(data.netlist);
         
+        // Update the heading in ChatPanel (optional - ChatPanel loads it itself)
+        // The ChatPanel already loads the name from the database, so no need to pass it
+        
         // Generate SVG export for this circuit
         await generateSvgExport(id, data.netlist);
         
@@ -81,6 +84,7 @@ function DashboardContent() {
         setCircuitData(null);
         setNetlist('');
         setSvgExportUrl(null);
+        toast.error('Failed to load circuit', { position: 'top-right' });
       } finally {
         setLoading(false);
       }
@@ -185,7 +189,9 @@ function DashboardContent() {
     }
   };
 
-  const runSimulation = async (netlistToSimulate: string) => {
+   // In your DashboardContent, update the runSimulation function:
+
+const runSimulation = async (netlistToSimulate: string) => {
   try {
     setNetlist(netlistToSimulate);
     
@@ -327,6 +333,7 @@ function DashboardContent() {
 
           <ChatPanel
             onNetlistGenerated={onNetlistGenerated}
+            circuitId={circuitId}  
           />
 
         </ResizablePanel>
