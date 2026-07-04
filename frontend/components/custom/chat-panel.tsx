@@ -30,18 +30,21 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_NETLIST_API_URL || 'http://localhos
 
 type NetlistResult = {
   success: boolean;
+  circuit_id?: number | null;
   title?: string | null;
   netlist: string;
   summary?: string | null;
-  python_code?: string | null;
   error?: string | null;
   blueprint?: Record<string, unknown> | null;
   simulation?: Record<string, unknown> | null;
   clarifications: string[];
+  intent?: string | null;
+  changes_summary?: string | null;
 };
 
 interface ChatPanelProps {
   onNetlistGenerated: (netlist: string) => void;
+  onCircuitCreated?: (circuitId: number) => void;
   circuitId?: string | null;
 }
 
@@ -84,7 +87,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
+export function ChatPanel({ onNetlistGenerated, onCircuitCreated, circuitId }: ChatPanelProps) {
   const [message, setMessage] = useState('');
   const [heading, setHeading] = useState('New Design');
   const [isEditingHeading, setIsEditingHeading] = useState(false);
@@ -204,15 +207,16 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
     content: string;
     message_type?: string;
     result?: NetlistResult;
-  }) => {
-    if (!circuitId) return;
+  }, targetCircuitId?: string | number | null) => {
+    const idToUse = targetCircuitId || circuitId;
+    if (!idToUse) return;
 
     try {
       await fetch(`${API_BASE_URL}/chat/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          circuit_id: parseInt(circuitId),
+          circuit_id: parseInt(String(idToUse)),
           ...messageData,
         }),
       });
@@ -223,7 +227,7 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
 
   async function sendMessage() {
     const text = message.trim();
-    if (!text || isGenerating || !circuitId) return;
+    if (!text || isGenerating) return;
 
     const userMessageId = ++messageIdCounter.current;
     const loadingId = ++messageIdCounter.current;
@@ -237,18 +241,13 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
     setMessage('');
     setIsGenerating(true);
 
-    // Save user message to DB
-    await saveMessageToDb({
-      role: 'user',
-      content: text,
-    });
-
     try {
       const response = await fetch(`${API_BASE_URL}/netlist/generate-netlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: text,
+          circuit_id: circuitId ? parseInt(circuitId) : undefined,
           run_simulation: true,
         }),
       });
@@ -258,6 +257,18 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
       const data: NetlistResult = await response.json();
 
       console.log('Generated netlist:', data);
+
+      // If backend returned a new circuit_id, notify parent
+      const effectiveCircuitId = data.circuit_id || circuitId;
+      if (data.circuit_id && !circuitId && onCircuitCreated) {
+        onCircuitCreated(data.circuit_id);
+      }
+
+      // Save user message to DB (using effective circuit_id for new circuits)
+      await saveMessageToDb({
+        role: 'user',
+        content: text,
+      }, effectiveCircuitId);
 
       setMessages((prev) =>
         prev.map((m) =>
@@ -273,19 +284,22 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
         content: data.summary || data.netlist || 'Response generated',
         message_type: 'response',
         result: data,
-      });
+      }, effectiveCircuitId);
 
       if (data.success && data?.title) {
         setHeading(data.title);
-        try {
-          await fetch(`${API_BASE_URL}/circuits/${circuitId}/heading`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: data.title }),
-          });
-         
-        } catch (error) {
-          console.error('Failed to update circuit name:', error);
+        const headingCircuitId = effectiveCircuitId || circuitId;
+        if (headingCircuitId) {
+          try {
+            await fetch(`${API_BASE_URL}/circuits/${headingCircuitId}/heading`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: data.title }),
+            });
+           
+          } catch (error) {
+            console.error('Failed to update circuit name:', error);
+          }
         }
       }
 
@@ -307,14 +321,6 @@ export function ChatPanel({ onNetlistGenerated, circuitId }: ChatPanelProps) {
             : m
         )
       );
-
-      // Save error response to DB
-      await saveMessageToDb({
-        role: 'assistant',
-        content: fallback.error || 'Error occurred',
-        message_type: 'response',
-        result: fallback,
-      });
     } finally {
       setIsGenerating(false);
     }

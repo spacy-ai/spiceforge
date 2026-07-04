@@ -17,7 +17,7 @@ import { useState } from 'react';
 import { apiBase } from '@/lib/config';
 
 interface exportPopupProps {
-  circuitId?: string;
+  circuitId?: string | null;
 }
 
 export function ExportPopup({ circuitId }: exportPopupProps) {

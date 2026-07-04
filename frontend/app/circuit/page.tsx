@@ -13,7 +13,6 @@ import { apiBase } from '@/lib/config';
 import type { SimulationResponse } from '@/lib/types/simulation';
 import type { ImperativePanelHandle } from 'react-resizable-panels';
 import { toast } from 'sonner';
-import { run } from 'node:test';
 
 interface CircuitData {
   id: number;
@@ -251,6 +250,11 @@ const runSimulation = async (netlistToSimulate: string) => {
     await runSimulation(generatedNetlist);
   };
 
+  const onCircuitCreated = (newCircuitId: number) => {
+    setCircuitId(String(newCircuitId));
+    router.replace(`/circuit?circuitid=${newCircuitId}`);
+  };
+
   return (
     <div className="bg-background flex h-screen w-screen flex-col">
       <Header
@@ -333,6 +337,7 @@ const runSimulation = async (netlistToSimulate: string) => {
 
           <ChatPanel
             onNetlistGenerated={onNetlistGenerated}
+            onCircuitCreated={onCircuitCreated}
             circuitId={circuitId}  
           />
 

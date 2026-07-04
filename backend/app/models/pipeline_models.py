@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Any, Optional
 
@@ -80,20 +79,6 @@ class ClarificationResult:
     needs_clarification: bool
     questions: list[str] = field(default_factory=list)
     partial_blueprint: Optional[dict] = None
-
-
-@dataclass
-class SessionState:
-    session_id: str
-    context: str = ""
-    latest_blueprint: Optional[dict] = None
-    latest_blueprint_dict: Optional[dict] = None
-    latest_netlist: str = ""
-    simulation_history: list[dict] = field(default_factory=list)
-    retry_history: list[dict] = field(default_factory=list)
-    conversation_history: list[dict] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
 
 
 def format_spice_value(value: float) -> str:

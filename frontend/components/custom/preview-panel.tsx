@@ -14,7 +14,7 @@ import { AnalysisPanel } from '@/components/custom/analysis-panel';
 import type { SimulationResponse } from '@/lib/types/simulation';
 
 interface PreviewPanelProps {
-  circuitId?: string;
+  circuitId?: string | null;
   svgExportUrl?: string | null;
   simulation?: SimulationResponse | null;
   onRefreshExport?: () => Promise<void>;

@@ -37,7 +37,7 @@ const formatDate = (value: string) => {
   }).format(parsed);
 };
 
-export function ProjectDrawer({ currentCircuitId }: { currentCircuitId?: string }) {
+export function ProjectDrawer({ currentCircuitId }: { currentCircuitId?: string | null }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

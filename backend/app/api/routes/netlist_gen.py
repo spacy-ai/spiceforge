@@ -1,34 +1,42 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+import logging
+
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from typing import Optional
+from sqlalchemy.orm import Session as DBSession
 
 from app.core.blueprint_validator import validate_circuit_blueprint
-from app.models.pipeline_models import PipelineResult, SynthesisResult
-from app.services.netlist_generation_pipeline import NetlistGenerationPipeline
+from app.core.dependencies import get_db, get_optional_current_user
+from app.models.pipeline_models import PipelineResult
+from app.models.user import User
+from app.services.pipeline_runner import run_pipeline_with_context
 
 router = APIRouter(tags=["netlist generation"])
+log = logging.getLogger(__name__)
 
 
 class GenerateNetlistRequest(BaseModel):
     prompt: str
-    api_key: Optional[str] = None
-    api_base: Optional[str] = None
-    model: Optional[str] = None
+    circuit_id: int | None = None
+    api_key: str | None = None
+    api_base: str | None = None
+    model: str | None = None
     run_simulation: bool = True
 
 
 class GenerateNetlistResponse(BaseModel):
     success: bool
-    title: Optional[str] = None
+    circuit_id: int | None = None
+    title: str | None = None
     netlist: str
-    summary: Optional[str] = None
-    python_code: Optional[str] = None
-    error: Optional[str] = None
-    blueprint: Optional[dict] = None
-    simulation: Optional[dict] = None
+    summary: str | None = None
+    error: str | None = None
+    blueprint: dict | None = None
+    simulation: dict | None = None
     clarifications: list[str] = []
+    intent: str | None = None
+    changes_summary: str | None = None
 
 
 class ValidateRequest(BaseModel):
@@ -38,7 +46,7 @@ class ValidateRequest(BaseModel):
 class ValidateResponse(BaseModel):
     is_valid: bool
     issues: list[dict]
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @router.get("/")
@@ -52,22 +60,32 @@ def health():
 
 
 @router.post("/generate-netlist", response_model=GenerateNetlistResponse)
-def generate_netlist(request: GenerateNetlistRequest):
-    return _pipeline_generate(request)
+def generate_netlist(
+    request: GenerateNetlistRequest,
+    db: DBSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    return _pipeline_generate(request, db, current_user)
 
 
-def _pipeline_generate(request: GenerateNetlistRequest) -> GenerateNetlistResponse:
+def _pipeline_generate(
+    request: GenerateNetlistRequest,
+    db: DBSession,
+    current_user: User | None,
+) -> GenerateNetlistResponse:
     try:
-        pipeline = NetlistGenerationPipeline(
+        run_result = run_pipeline_with_context(
+            db,
+            prompt=request.prompt,
+            circuit_id=request.circuit_id,
+            user_id=current_user.id if current_user else None,
             api_key=request.api_key,
             api_base=request.api_base,
             model=request.model,
-        )
-
-        result: PipelineResult = pipeline.run(
-            prompt=request.prompt,
             run_simulation=request.run_simulation,
         )
+
+        result: PipelineResult = run_result.result
 
         netlist = ""
         if result.synthesis:
@@ -85,19 +103,24 @@ def _pipeline_generate(request: GenerateNetlistRequest) -> GenerateNetlistRespon
                 "convergence_failures": result.simulation.convergence_failures,
             }
 
+        intent_str = result.intent.intent.value if result.intent else None
+
         return GenerateNetlistResponse(
             success=result.success,
+            circuit_id=run_result.circuit_id,
             title=result.title or "",
             netlist=netlist,
             summary=result.summary or "",
-            python_code=None,
             error=result.error,
             blueprint=result.blueprint,
             simulation=sim_dict,
             clarifications=result.clarifications,
+            intent=intent_str,
+            changes_summary=result.changes_summary,
         )
 
     except Exception as exc:
+        log.warning("Pipeline generation failed: %s", exc)
         return GenerateNetlistResponse(
             success=False,
             netlist="",

@@ -24,7 +24,7 @@ export function CodePanel({
   onSimulate?: (netlist: string) => Promise<void>;
    netlist: string;
    onNetlistChange: (value: string) => void;
-  circuitId?: string;
+  circuitId?: string | null;
 }) {
  
   const [copied, setCopied] = useState(false);
