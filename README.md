@@ -1,6 +1,6 @@
 # SPICE Platform
 
-**SPICE Platform** is a web-based circuit simulation and analysis application. It combines an interactive Next.js frontend with a FastAPI backend to enable circuit schematic rendering, netlist generation, measurement analysis, and SPICE circuit simulation using ngspice.
+**SPICE Platform** is an AI-powered web platform for designing, simulating, and analyzing electronic circuits. It features an interactive schematic editor, automatic SPICE netlist generation, waveform visualization, automated circuit measurements, AI-assisted debugging, and intelligent simulation analysis, providing an end-to-end environment for circuit design, validation, and optimization.
 
 
 
